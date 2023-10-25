@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .point {
+      width: 5px;
+      height: 5px;
+      background-color: green;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const numPoints = 50; // Numero di punti
+    const maxX = 500;     // Larghezza massima del piano
+    const maxY = 500;     // Altezza massima del piano
+
+    for (let i = 0; i < numPoints; i++) {
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+      const point = document.createElement("div");
+      point.className = "point";
+      point.style.left = `${x}px`;
+      point.style.top = `${y}px`;
+      document.body.appendChild(point);
+    }
+  </script>
+</body>
+</html>

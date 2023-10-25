@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .point {
+      width: 5px;
+      height: 5px;
+      background-color: red;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const numPoints = 50; // Numero di punti
+    const centerX = 250;  // Centro x del piano
+    const centerY = 250;  // Centro y del piano
+    const stdDev = 50;   // Deviazione standard
+
+    for (let i = 0; i < numPoints; i++) {
+      const x = centerX + (Math.random() * stdDev);
+      const y = centerY + (Math.random() * stdDev);
+      const point = document.createElement("div");
+      point.className = "point";
+      point.style.left = `${x}px`;
+      point.style.top = `${y}px`;
+      document.body.appendChild(point);
+    }
+  </script>
+</body>
+</html>
+
