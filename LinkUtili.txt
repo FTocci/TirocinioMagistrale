@@ -1,0 +1,2 @@
+Distribuzione punti in una sfera:
+https://math.stackexchange.com/questions/1585975/how-to-generate-random-points-on-a-sphere
