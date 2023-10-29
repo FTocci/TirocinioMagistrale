@@ -24,8 +24,8 @@
 <body>
     <button id="moveLeftButton" style="top: 10px; left: 10px;">MOVE LEFT</button>
     <button id="moveRightButton" style="top: 10px; left: 120px;">MOVE RIGHT</button>
-    <button id="moveUpButton" style="top: 10px; left: 240px;">MOVE TOP</button>
-    <button id="moveDownButton" style="top: 10px; left: 340px;">MOVE BOTTOM</button>
+    <button id="moveUpButton" style="top: 10px; left: 240px;">MOVE UP</button>
+    <button id="moveDownButton" style="top: 10px; left: 340px;">MOVE DOWN</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Variabili globali
@@ -40,19 +40,19 @@
 		// Funzione per spostare la telecamera a destra
 		function moveCameraRight() {
 			camera.position.x += 0.5; // Modifica la posizione x della telecamera
-			camera.lookAt(0, 0, 0); // Fai in modo che la telecamera guardi al centro della scena
+			camera.lookAt(0, 0, 0); 
 		}
 
 		// Funzione per spostare la telecamera in alto
 		function moveCameraUp() {
 			camera.position.y += 0.5; // Modifica la posizione y della telecamera
-			camera.lookAt(0, 0, 0); // Fai in modo che la telecamera guardi al centro della scena
+			camera.lookAt(0, 0, 0); 
 		}
 
 		// Funzione per spostare la telecamera in basso
 		function moveCameraDown() {
 			camera.position.y -= 0.5; // Modifica la posizione y della telecamera
-			camera.lookAt(0, 0, 0); // Fai in modo che la telecamera guardi al centro della scena
+			camera.lookAt(0, 0, 0); 
 		}
         // Funzione per inizializzare la scena
         function init() {
@@ -100,19 +100,19 @@
             // Aggiungi la sfera alla scena
             scene.add(sphere);
 
-            // Creazione del piccolo grafo
+            // Creazione del grafo
             var nodeGeometry = new THREE.SphereGeometry(0.05, 16, 16); // Nodo del grafo
             var nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x00FF00 }); // Colore del nodo
             var lineMaterial = new THREE.LineBasicMaterial({ color: 0x00FF00 }); // Colore della linea
 
 			// Numero di nodi da generare
-			var numNodes = 1000;
+			var numNodes = 500;
 			var nodes = [];
 			var lines = [];
 
 			// Creazione dei nodi
-			function generateRandomNumberWithGaussian() {
-				// Genera numeri casuali con distribuzione gaussiana (normali)
+			function generateRandomCoordinates() {
+				// Genera numeri casuali
 				var x, y, z;
 				var lengthSquared;
 				do {
@@ -120,7 +120,7 @@
 					y = Math.random() * 2 - 1;
 					z = Math.random() * 2 - 1;
 					lengthSquared = x * x + y * y + z * z;
-				} while (lengthSquared >= 1 || lengthSquared === 0); // Continua finché il quadrato della lunghezza è maggiore o uguale a 1 o uguale a 0
+				} while (lengthSquared === 0); // Continua finché lengthSquared è uguale a 0
 
 				// Normalizza i numeri
 				var length = Math.sqrt(lengthSquared);
@@ -140,7 +140,7 @@
 			// Creazione dei nodi
 			for (var i = 0; i < numNodes; i++) {
 				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-				var position = generateRandomNumberWithGaussian();
+				var position = generateRandomCoordinates();
 				node.position.set(position.x, position.y, position.z);
 				nodes.push(node);
 
