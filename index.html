@@ -22,54 +22,29 @@
     </style>
 </head>
 <body>
-    <button id="moveLeftButton" style="top: 10px; left: 10px;">MOVE LEFT</button>
-    <button id="moveRightButton" style="top: 10px; left: 120px;">MOVE RIGHT</button>
-    <button id="moveUpButton" style="top: 10px; left: 240px;">MOVE UP</button>
-    <button id="moveDownButton" style="top: 10px; left: 340px;">MOVE DOWN</button>
+    <button id="zoomButton">Zoom Z</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Variabili globali
-        var scene, camera, renderer, transparentSphere, isRotating = false, sphere;
+        var scene, camera, renderer, transparentSphere, isRotating = false;
 		
-		// Funzione per spostare la telecamera a sinistra
-		function moveCameraLeft() {
-			camera.position.x -= 0.5; // Modifica la posizione x della telecamera
-			camera.lookAt(0, 0, 0); // Fai in modo che la telecamera guardi al centro della scena
-		}
-
-		// Funzione per spostare la telecamera a destra
-		function moveCameraRight() {
-			camera.position.x += 0.5; // Modifica la posizione x della telecamera
-			camera.lookAt(0, 0, 0); 
-		}
-
-		// Funzione per spostare la telecamera in alto
-		function moveCameraUp() {
-			camera.position.y += 0.5; // Modifica la posizione y della telecamera
-			camera.lookAt(0, 0, 0); 
-		}
-
-		// Funzione per spostare la telecamera in basso
-		function moveCameraDown() {
-			camera.position.y -= 0.5; // Modifica la posizione y della telecamera
-			camera.lookAt(0, 0, 0); 
-		}
         // Funzione per inizializzare la scena
         function init() {
             // Creiamo una scena
             scene = new THREE.Scene();
-
+			scene.background = new THREE.TextureLoader().load( "textures/planetgalaxybackround.jpg" );
+			
             // Creiamo una telecamera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
+            camera.position.z = 8;
 
             // Creiamo un renderizzatore
             renderer = new THREE.WebGLRenderer();
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Creiamo una sfera
-			var geometry = new THREE.SphereGeometry(1.6, 32, 32);
+            // Creiamo una sfera da posizionare al centro della scena
+			var geometry = new THREE.SphereGeometry(1.5, 32, 32);
 
 			// Creiamo un materiale trasparente
 			var material = new THREE.MeshBasicMaterial({
@@ -81,90 +56,102 @@
 
 			// Creiamo la mesh della sfera utilizzando il materiale
 			transparentSphere = new THREE.Mesh(geometry, material);
+			transparentSphere.position.set(0,0,0);
 			scene.add(transparentSphere);
+			
+			//creazione Sfera 2
+			Sphere2 = new THREE.Mesh(geometry, material);
+			Sphere2.position.set(5,1.5,0);
+			scene.add(Sphere2);
+			
+			//creazione Sfera 3
+			Sphere3 = new THREE.Mesh(geometry, material);
+			Sphere3.position.set(-5,1,0);
+			scene.add(Sphere3);
+			
+			var spheres =[Sphere3,transparentSphere,Sphere2];
+			
+            // Creazione dei grafi
+            var nodeGeometry = new THREE.SphereGeometry(0.025, 16, 16); // Nodo del grafo
+			
+			// Crea il materiale con riflessione speculare
+			var nodeMaterial = new THREE.MeshPhongMaterial({
+				color: 0x00AA00, // Colore del nodo
+				specular: 0xffffff, // Colore del riflesso speculare
+				shininess: 30 // Intensità della speculare
+			});
+			
+			var light = new THREE.DirectionalLight( 0xffffff );	//luce direzionale sul singolo nodo
+			light.position.set( 0, 1, 1 );
+			scene.add(light);
 
-
-            // Creazione di una sfera
-            var geometry = new THREE.SphereGeometry(1, 32, 32);
-
-            // Creazione di una texture per il contenuto interno
-            var textureLoader = new THREE.TextureLoader();
-            var texture = textureLoader.load('orange.jpg');
-
-            // Creazione di un materiale con la texture
-            var material = new THREE.MeshBasicMaterial({ map: texture });
-
-            // Creazione della mesh della sfera utilizzando il materiale
-            sphere = new THREE.Mesh(geometry, material);
-            sphere.position.set(-8, 3, -5);
-            // Aggiungi la sfera alla scena
-            scene.add(sphere);
-
-            // Creazione del grafo
-            var nodeGeometry = new THREE.SphereGeometry(0.05, 16, 16); // Nodo del grafo
-            var nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x00FF00 }); // Colore del nodo
             var lineMaterial = new THREE.LineBasicMaterial({ color: 0x00FF00 }); // Colore della linea
 
 			// Numero di nodi da generare
-			var numNodes = 500;
-			var nodes = [];
-			var lines = [];
+			function generateNodes(numNodes){
+				nodes = [];
+				var lines = [];
 
-			// Creazione dei nodi
-			function generateRandomCoordinates() {
-				// Genera numeri casuali
-				var x, y, z;
-				var lengthSquared;
-				do {
-					x = Math.random() * 2 - 1; // Numeri casuali tra -1 e 1
-					y = Math.random() * 2 - 1;
-					z = Math.random() * 2 - 1;
-					lengthSquared = x * x + y * y + z * z;
-				} while (lengthSquared === 0); // Continua finché lengthSquared è uguale a 0
+				// Creazione dei nodi del grafo
+				function generateRandomCoordinates() {
+					// Genera numeri casuali
+					var x, y, z;
+					var lengthSquared;
+					do {
+						x = Math.random() * 2 - 1; // Numeri casuali tra -1 e 1
+						y = Math.random() * 2 - 1;
+						z = Math.random() * 2 - 1;
+						lengthSquared = x * x + y * y + z * z;
+					} while (lengthSquared === 0); // Continua finché lengthSquared è uguale a 0
 
-				// Normalizza i numeri
-				var length = Math.sqrt(lengthSquared);
-				x /= length;
-				y /= length;
-				z /= length;
+					// Normalizza i numeri
+					var length = Math.sqrt(lengthSquared);
+					x /= length;
+					y /= length;
+					z /= length;
 
-				// Moltiplica per il raggio della sfera (1.5)
-				var radius = 1.5;
-				x *= radius;
-				y *= radius;
-				z *= radius;
+					// Moltiplica per il raggio della sfera (1.5)
+					var radius = 1.5;
+					x *= radius;
+					y *= radius;
+					z *= radius;
 
-				return { x, y, z };
-			}
-
-			// Creazione dei nodi
-			for (var i = 0; i < numNodes; i++) {
-				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-				var position = generateRandomCoordinates();
-				node.position.set(position.x, position.y, position.z);
-				nodes.push(node);
-
-				if (i > 0) {
-					// Creazione delle linee tra i nodi
-					var prevNode = nodes[i - 1];
-					var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([prevNode.position, node.position]), lineMaterial);
-					lines.push(line);
+					return { x, y, z };
 				}
-			}
 
+				// Creazione dei nodi della sfera
+				for (var i = 0; i < numNodes; i++) {
+					var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+					var position = generateRandomCoordinates();
+					node.position.set(position.x, position.y, position.z);
+					nodes.push(node);
 
-			// Aggiungi i nodi e le linee alla sfera principale
-			for (var i = 0; i < numNodes; i++) {
-				transparentSphere.add(nodes[i]);	
-				if (i > 0) {
-					transparentSphere.add(lines[i - 1]);
+					/*if (i > 0) {
+						// Creazione delle linee tra i nodi
+						var prevNode = nodes[i - 1];
+						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([prevNode.position, node.position]), lineMaterial);
+						lines.push(line);
+					}*/
 				}
+				return nodes;
 			}
+			
+			var num = 100;
+			// Aggiungi i nodi e le linee alle sfere
+			for (var j = 0; j < spheres.length; j++) {
+				nodi = generateNodes(num);
+				for(var i = 0; i < nodi.length; i++){
+					spheres[j].add(nodi[i]);
+				}
+				num *= 5;
+			}
+
+
 
             // Aggiungiamo una luce
-            var light = new THREE.PointLight(0xffffff);
-            light.position.set(1, 1, 3);
-            scene.add(light);
+            //var light = new THREE.PointLight(0xffffff,10,0);
+            //light.position.set(0, 0, 0);
+			//scene.add(light);
 
             // Registriamo l'evento per la pressione del tasto "Space"
             document.addEventListener('keydown', function (event) {
@@ -172,22 +159,17 @@
                     isRotating = !isRotating;
                 }
             });
-			document.getElementById('moveLeftButton').addEventListener('click', function() {
-				moveCameraLeft();
-			});
+			
+			// Ottieni il riferimento al bottone
+			var zoomButton = document.getElementById("zoomButton");
 
-			document.getElementById('moveRightButton').addEventListener('click', function() {
-				moveCameraRight();
+			// Aggiungi un gestore di eventi al bottone
+			zoomButton.addEventListener("click", function() {
+				// Modifica la posizione Z della telecamera
+				var zoomAmount = 1; // Modifica questa quantità come desideri
+				camera.position.z -= zoomAmount;
 			});
-
-			document.getElementById('moveUpButton').addEventListener('click', function() {
-				moveCameraUp();
-			});
-
-			document.getElementById('moveDownButton').addEventListener('click', function() {
-				moveCameraDown();
-			});
-
+			
             animate();
         }
 
@@ -199,12 +181,11 @@
                 // Ruotiamo le sfere solo se isRotating è true
                 transparentSphere.rotation.x += 0.01;
                 transparentSphere.rotation.y += 0.01;
-                if (sphere) {
-                    sphere.rotation.x += 0.01;
-                    sphere.rotation.y += 0.01;
-                }
+				Sphere2.rotation.x += 0.01;
+                Sphere2.rotation.y += 0.01;
+				Sphere3.rotation.x += 0.01;
+                Sphere3.rotation.y += 0.01;
             }
-
             renderer.render(scene, camera);
         }
 		
