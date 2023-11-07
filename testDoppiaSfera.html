@@ -34,11 +34,11 @@
             scene = new THREE.Scene();
 			scene.background = new THREE.TextureLoader().load( "textures/planetgalaxybackround.jpg" );
 			
-			var lontananza = 8;
+			var lontananza = 10;
             // Creiamo una telecamera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza);
             camera.position.z = lontananza;
-			camera.zoom = 1.6;
+			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
 
             // Creiamo un renderizzatore
@@ -68,7 +68,7 @@
 			//var materialSubSphere = new THREE.MeshPhongMaterial({ color: 0x006400 }); // Colore verde scuro
 			
 			var textureLoader = new THREE.TextureLoader();
-			var texture = textureLoader.load("textures/earth/earthmap1k.jpg");
+			var texture = textureLoader.load("textures/greenTexture.jpg");
 			var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
 			
 			// Crea una geometria sferica
@@ -103,7 +103,7 @@
 
 			// Crea una luce direzionale
 			var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-			directionalLight.position.set(10, 10, 1);
+			directionalLight.position.set(5, 10, 1);
 			scene.add(directionalLight);
 			
 			//---------------------------------GRAFO--------------------------------------------------------------------------------
