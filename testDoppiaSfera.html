@@ -27,7 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Variabili globali
-        var scene, camera, renderer, transparentSphere, isRotating = false, subSphere;
+        var scene, camera, renderer, transparentSphere, isRotating = false, subSphere, nodes;
         // Funzione per inizializzare la scena
         function init() {
             // Creiamo una scena
@@ -36,7 +36,7 @@
 			
 			var lontananza = 10;
             // Creiamo una telecamera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+1);
             camera.position.z = lontananza;
 			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
@@ -49,19 +49,24 @@
 			//--------------------------------------------SFERA TRASPARENTE--------------------------------------------------------
             // Creiamo una sfera da posizionare al centro della scena
 			var geometry = new THREE.SphereGeometry(1.5, 32, 32);
+			var geometry2 = new THREE.SphereGeometry(1.49, 32, 32);
+			var geometry3 = new THREE.SphereGeometry(1.48, 32, 32);
 
 			// Creiamo un materiale trasparente
 			var material = new THREE.MeshBasicMaterial({
 				color: 0xffffff,
 				transparent: true, // Imposta il materiale come trasparente
-				opacity: 0.3, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+				opacity: 0.1, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
 				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 			});
 
 			// Creiamo la mesh della sfera utilizzando il materiale
-			transparentSphere = new THREE.Mesh(geometry, material);
-			transparentSphere.position.set(0,0,0);
+			transparentSphere = new THREE.Mesh(geometry, material);			
+			transparentSphere2 = new THREE.Mesh(geometry2, material);			
+			transparentSphere3 = new THREE.Mesh(geometry3, material);			
 			scene.add(transparentSphere);
+			scene.add(transparentSphere2);
+			scene.add(transparentSphere3);
 			
 			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
 			// Crea un materiale verde scuro
@@ -77,7 +82,7 @@
 			// Crea una mesh utilizzando la geometria e il materiale
 			subSphere = new THREE.Mesh(geometrySubSphere, materialSubSphere);
 			subSphere.position.set(transparentSphere.position.x, transparentSphere.position.y, transparentSphere.position.z);
-			scene.add(subSphere);
+			//scene.add(subSphere);
 			
 			//----------------------------------SFERE EXTRA------------------------------------------------------------------------
 			// Crea un materiale verde scuro
@@ -110,21 +115,23 @@
             // Creazione del grafo
             var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
 			var nodeMaterial = new THREE.MeshLambertMaterial({ color: 0x00AA00 });
+            var nodeMaterial2 = new THREE.MeshLambertMaterial({ color: 0xffffff });
             var lineMaterial = new THREE.LineBasicMaterial({ color: 0x006400, opacity: 0.75}); // Colore della linea
 
 			// Numero di nodi da generare
-			var numNodes = 1000;
-			var nodes = [];
+			var numNodes = 1200;
+			nodes = [];
 			var lines = [];
 
-			// Creazione dei nodi
+			// Creazione delle coordinate
 			function generateRandomCoordinates() {
 				var u = Math.random(); // Uniformemente distribuito tra 0 e 1
 				var v = Math.random(); // Uniformemente distribuito tra 0 e 1
 
 				var theta = 2 * Math.PI * u; // Angolo orizzontale da 0 a 2π
 				var phi = Math.acos(2 * v - 1); // Angolo verticale da 0 a π
-
+				 
+				
 				var x = Math.sin(phi) * Math.cos(theta); // Calcolo delle coordinate sferiche
 				var y = Math.sin(phi) * Math.sin(theta);
 				var z = Math.cos(phi);
@@ -146,30 +153,33 @@
 				nodes.push(node);
 			}
 			
-			
-
 			// Aggiungi i nodi alla sfera principale
 			for (var i = 0; i < numNodes; i++) {
-				transparentSphere.add(nodes[i]);	
+				if(i %3 === 0) transparentSphere.add(nodes[i]);
+				if(i %3 === 1) transparentSphere2.add(nodes[i]);	
+				if(i %3 === 2) transparentSphere3.add(nodes[i]);	
 			}
+			
 			// Aggiungi gli archi alla sfera principale
-			for(var i=0; i<2000; i++){
-				nodoA=nodes[Math.floor(Math.random()*nodes.length)];
-				do{
-					nodoB=nodes[Math.floor(Math.random()*nodes.length)];
-				}while(nodoA===nodoB);
-				
-				var dx = nodoA.position.x - nodoB.position.x;
-				var dy = nodoA.position.y - nodoB.position.y;
-				var dz = nodoA.position.z - nodoB.position.z;
-
-				var distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-				if(distance <= 1.5){
-					var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
-					transparentSphere.add(line);
+			for(var i=0; i<nodes.length; i++){
+				nodoA = nodes[i];
+				for(var j = i+1; j < nodes.length; j++){
+					nodoB = nodes[j];
+					var dx = nodoA.position.x - nodoB.position.x;
+					var dy = nodoA.position.y - nodoB.position.y;
+					var dz = nodoA.position.z - nodoB.position.z;
+					var distance = dx * dx + dy * dy + dz * dz;
+					
+					if(nodoA.parent === nodoB.parent && distance <= 0.3*0.3){		
+						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
+						if(i %3 === 0) transparentSphere.add(line);	
+						if(i %3 === 1) transparentSphere2.add(line);	
+						if(i %3 === 2) transparentSphere3.add(line);
+					}
 				}
+
 			}
+
 			//-----------------------------------BOTTONI E FUNZIONALITà----------------------------------------------------
             // Registriamo l'evento per la pressione del tasto "Space"
             document.addEventListener('keydown', function (event) {
@@ -180,6 +190,7 @@
 			// Ottieni il riferimento al bottone
 			var zoomButtonIn = document.getElementById("zoomButtonIn");
 			var zoomButtonOut = document.getElementById("zoomButtonOut");
+			console.log(transparentSphere);
 			
 			var zoomCount=0;
 			// Aggiungi un gestore di eventi al bottone
@@ -208,8 +219,12 @@
 
             if (isRotating) {
                 // Ruotiamo le sfere solo se isRotating è true
-                transparentSphere.rotation.x += 0.01;
-                transparentSphere.rotation.y += 0.01;
+                transparentSphere.rotation.x += 0.0055;
+                transparentSphere.rotation.y += 0.005;
+				transparentSphere2.rotation.x += 0.0050;
+                transparentSphere2.rotation.y += 0.005;
+				transparentSphere3.rotation.x += 0.0045;
+                transparentSphere3.rotation.y += 0.005;
                 subSphere.rotation.y += 0.01;
                 
             }
