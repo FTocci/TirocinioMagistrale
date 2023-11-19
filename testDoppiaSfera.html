@@ -56,7 +56,7 @@
 			var material = new THREE.MeshBasicMaterial({
 				color: 0xffffff,
 				transparent: true, // Imposta il materiale come trasparente
-				opacity: 0.1, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+				opacity: 0.2, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
 				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 			});
 
@@ -173,8 +173,8 @@
 					if(nodoA.parent === nodoB.parent && distance <= 0.3*0.3){		
 						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
 						if(i %3 === 0) transparentSphere.add(line);	
-						if(i %3 === 1) transparentSphere2.add(line);	
-						if(i %3 === 2) transparentSphere3.add(line);
+						else if(i %3 === 1) transparentSphere2.add(line);	
+						else transparentSphere3.add(line);
 					}
 				}
 
@@ -219,14 +219,35 @@
 
             if (isRotating) {
                 // Ruotiamo le sfere solo se isRotating è true
-                transparentSphere.rotation.x += 0.0055;
-                transparentSphere.rotation.y += 0.005;
-				transparentSphere2.rotation.x += 0.0050;
-                transparentSphere2.rotation.y += 0.005;
-				transparentSphere3.rotation.x += 0.0045;
-                transparentSphere3.rotation.y += 0.005;
+				/* VERSIONE CHE UTILIZZA FUNZIONE SENO E FUNZIONE MODULO
+					- Abs: funzione modulo
+					- Date().getTime(): fornisce timestamp
+					- /2500 determina quanto l'oscillazione varia velocemente (maggiore è il numero, meno è rapida)
+					- /500: [0,1] --> [0,0.002]
+				*/
+				transparentSphere.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 2750)))/500;
+				transparentSphere.rotation.y += 0.005;
+
+				transparentSphere2.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3000)))/500;
+				transparentSphere2.rotation.y += 0.005;
+
+				transparentSphere3.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3250)))/500;
+				transparentSphere3.rotation.y += 0.005;
+				
+				//console.log(Math.sin(new Date().getTime() / 3000));
+				
+				/*	VERSIONE CON VALORI FISSI
+					transparentSphere.rotation.x += 0.0050;
+					transparentSphere.rotation.y += 0.005;
+
+					transparentSphere2.rotation.x += 0.0047
+					transparentSphere2.rotation.y += 0.005;
+
+					transparentSphere3.rotation.x += 0.0053;
+					transparentSphere3.rotation.y += 0.005;
+				*/
+				
                 subSphere.rotation.y += 0.01;
-                
             }
 
             renderer.render(scene, camera);
