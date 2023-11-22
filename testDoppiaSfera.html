@@ -27,7 +27,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Variabili globali
-        var scene, camera, renderer, transparentSphere, isRotating = false, subSphere, nodes;
+        var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false, subSphere, nodes, scaleFactor = 1;
         // Funzione per inizializzare la scena
         function init() {
             // Creiamo una scena
@@ -36,7 +36,7 @@
 			
 			var lontananza = 10;
             // Creiamo una telecamera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+1);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.z = lontananza;
 			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
@@ -51,12 +51,20 @@
 			var geometry = new THREE.SphereGeometry(1.5, 32, 32);
 			var geometry2 = new THREE.SphereGeometry(1.49, 32, 32);
 			var geometry3 = new THREE.SphereGeometry(1.48, 32, 32);
+			var geometry4 = new THREE.SphereGeometry(1.51, 32, 32);
+			var geometryClick = new THREE.SphereGeometry(1.7, 32, 32);
 
 			// Creiamo un materiale trasparente
 			var material = new THREE.MeshBasicMaterial({
 				color: 0xffffff,
 				transparent: true, // Imposta il materiale come trasparente
-				opacity: 0.2, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+				opacity: 0.1, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
+			});
+			var materialClick = new THREE.MeshBasicMaterial({
+				color: 0xffffff,
+				transparent: true, // Imposta il materiale come trasparente
+				opacity: 0, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
 				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 			});
 
@@ -64,9 +72,14 @@
 			transparentSphere = new THREE.Mesh(geometry, material);			
 			transparentSphere2 = new THREE.Mesh(geometry2, material);			
 			transparentSphere3 = new THREE.Mesh(geometry3, material);			
+			transparentSphere4 = new THREE.Mesh(geometry4, material);			
+			sphereClick = new THREE.Mesh(geometryClick, materialClick);	
+			
 			scene.add(transparentSphere);
 			scene.add(transparentSphere2);
 			scene.add(transparentSphere3);
+			scene.add(transparentSphere4);
+			scene.add(sphereClick);
 			
 			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
 			// Crea un materiale verde scuro
@@ -82,7 +95,7 @@
 			// Crea una mesh utilizzando la geometria e il materiale
 			subSphere = new THREE.Mesh(geometrySubSphere, materialSubSphere);
 			subSphere.position.set(transparentSphere.position.x, transparentSphere.position.y, transparentSphere.position.z);
-			//scene.add(subSphere);
+			scene.add(subSphere);
 			
 			//----------------------------------SFERE EXTRA------------------------------------------------------------------------
 			// Crea un materiale verde scuro
@@ -119,7 +132,7 @@
             var lineMaterial = new THREE.LineBasicMaterial({ color: 0x006400, opacity: 0.75}); // Colore della linea
 
 			// Numero di nodi da generare
-			var numNodes = 1200;
+			var numNodes = 1600;
 			nodes = [];
 			var lines = [];
 
@@ -153,32 +166,60 @@
 				nodes.push(node);
 			}
 			
-			// Aggiungi i nodi alla sfera principale
+			// Aggiungi i nodi alle sfera principale
 			for (var i = 0; i < numNodes; i++) {
-				if(i %3 === 0) transparentSphere.add(nodes[i]);
-				if(i %3 === 1) transparentSphere2.add(nodes[i]);	
-				if(i %3 === 2) transparentSphere3.add(nodes[i]);	
+				if(i %4 === 0) transparentSphere.add(nodes[i]);
+				if(i %4 === 1) transparentSphere2.add(nodes[i]);	
+				if(i %4 === 2) transparentSphere3.add(nodes[i]);	
+				if(i %4 === 3) transparentSphere4.add(nodes[i]);	
 			}
 			
-			// Aggiungi gli archi alla sfera principale
-			for(var i=0; i<nodes.length; i++){
-				nodoA = nodes[i];
-				for(var j = i+1; j < nodes.length; j++){
-					nodoB = nodes[j];
-					var dx = nodoA.position.x - nodoB.position.x;
-					var dy = nodoA.position.y - nodoB.position.y;
-					var dz = nodoA.position.z - nodoB.position.z;
-					var distance = dx * dx + dy * dy + dz * dz;
-					
-					if(nodoA.parent === nodoB.parent && distance <= 0.3*0.3){		
-						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
-						if(i %3 === 0) transparentSphere.add(line);	
-						else if(i %3 === 1) transparentSphere2.add(line);	
-						else transparentSphere3.add(line);
-					}
-				}
+			creaArchi(nodes);
+			
+			//-----------------------------------ANIMAZIONI----------------------------------------------------------------
+			
+			// Gestione del click sulla sfera
+			window.addEventListener('mousedown', (event) => {
+				const mouse = new THREE.Vector2();
+				const raycaster = new THREE.Raycaster();
 
-			}
+				// Calcola le coordinate del mouse
+				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+				mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+				// Imposta il raycaster
+				raycaster.setFromCamera(mouse, camera);
+
+				// Trova gli oggetti intersecati dal raycaster
+				const intersects = raycaster.intersectObjects(scene.children, true);
+
+				// Verifica se la sfera è stata cliccata
+				if (intersects.length > 0 && intersects[0].object === sphereClick) {//ciclo che genera questa parte e scorre le sphere click
+					console.log('Sfera cliccata!');
+					sphereClicked = true;
+
+					for(var l=0;l<nodes.length/2;l++){
+						nodes[l].position.set(nodes[l].position.x*1/1.5,nodes[l].position.y*1/1.5,nodes[l].position.z*1/1.5);
+						subSphere.add(nodes[l]);
+					}
+					var mat = new THREE.MeshBasicMaterial({
+						color: 0xffffff,
+						transparent: true, // Imposta il materiale come trasparente
+						opacity: 0.2, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+						depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
+					});
+					subSphere.material=mat;
+					console.log(subSphere.children);
+					console.log(nodes);
+					
+					//creaArchi(nuoviNodi);
+					setTimeout(function() {
+						sphereClicked = false;
+					}, 4000);
+					
+				}
+			});
+			
 
 			//-----------------------------------BOTTONI E FUNZIONALITà----------------------------------------------------
             // Registriamo l'evento per la pressione del tasto "Space"
@@ -212,6 +253,28 @@
 
             animate();
         }
+		
+		function creaArchi(nodes){
+            var lineMaterial = new THREE.LineBasicMaterial({ color: 0x006400, opacity: 0.75}); // Colore della linea
+			// Aggiungi gli archi alla sfera principale
+			for(var i=0; i<nodes.length; i++){
+				nodoA = nodes[i];
+				for(var j = i+1; j < nodes.length; j++){
+					nodoB = nodes[j];
+					var dx = nodoA.position.x - nodoB.position.x;
+					var dy = nodoA.position.y - nodoB.position.y;
+					var dz = nodoA.position.z - nodoB.position.z;
+					var distance = dx * dx + dy * dy + dz * dz;
+					
+					if(nodoA.parent === nodoB.parent && distance <= 0.3*0.3){		
+						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
+						
+						nodoA.parent.add(line);
+					}
+				}
+
+			}
+		}
 
         // Funzione per animare la scena
         function animate() {
@@ -222,17 +285,20 @@
 				/* VERSIONE CHE UTILIZZA FUNZIONE SENO E FUNZIONE MODULO
 					- Abs: funzione modulo
 					- Date().getTime(): fornisce timestamp
-					- /2500 determina quanto l'oscillazione varia velocemente (maggiore è il numero, meno è rapida)
+					- /2500 determina quanto l'oscillazione varia velocemente (maggiore è il numero, meno è rapida la variazione)
 					- /500: [0,1] --> [0,0.002]
 				*/
 				transparentSphere.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 2750)))/500;
-				transparentSphere.rotation.y += 0.005;
+				transparentSphere.rotation.y += 0.004;
 
 				transparentSphere2.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3000)))/500;
 				transparentSphere2.rotation.y += 0.005;
 
 				transparentSphere3.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3250)))/500;
-				transparentSphere3.rotation.y += 0.005;
+				transparentSphere3.rotation.y += 0.006;
+				
+				transparentSphere4.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3500)))/500;
+				transparentSphere4.rotation.y += 0.007;
 				
 				//console.log(Math.sin(new Date().getTime() / 3000));
 				
@@ -249,9 +315,39 @@
 				
                 subSphere.rotation.y += 0.01;
             }
+			
+			var spheres=[transparentSphere,transparentSphere2,transparentSphere3,transparentSphere4,sphereClick]; //per ampliare basta cambiare contenuto array
+			if(sphereClicked){
+				for(var k=0;k<spheres.length;k++){
+					s=spheres[k];
+					if (s.position.z > -30) {
+						s.position.z -= 0.05;
+						s.position.x += 0.05;
+						s.position.y += 0.05;
+						s.material.opacity -= 0.0002;
+						if(s.material.opacity<=0)scene.remove(s);
+						
+					}
+				}
+				scaleFactor+=0.002;				
+				subSphere.scale.set(scaleFactor, scaleFactor, scaleFactor);
+			}
 
             renderer.render(scene, camera);
         }
+		
+		
+		
+		// Ridimensionamento della finestra
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(newWidth, newHeight);
+        });
 		
 
         // Inizializziamo la scena
