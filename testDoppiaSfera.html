@@ -137,7 +137,7 @@
 			var lines = [];
 
 			// Creazione delle coordinate
-			function generateRandomCoordinates() {
+			function generateRandomCoordinates(raggio) {
 				var u = Math.random(); // Uniformemente distribuito tra 0 e 1
 				var v = Math.random(); // Uniformemente distribuito tra 0 e 1
 
@@ -150,7 +150,7 @@
 				var z = Math.cos(phi);
 
 				// Moltiplica per il raggio della sfera (1.5)
-				var radius = 1.5;
+				var radius = raggio;
 				x *= radius;
 				y *= radius;
 				z *= radius;
@@ -161,7 +161,7 @@
 			// Creazione dei nodi
 			for (var i = 0; i < numNodes; i++) {
 				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-				var position = generateRandomCoordinates();
+				var position = generateRandomCoordinates(1.5);
 				node.position.set(position.x, position.y, position.z);
 				nodes.push(node);
 			}
@@ -174,7 +174,7 @@
 				if(i %4 === 3) transparentSphere4.add(nodes[i]);	
 			}
 			
-			creaArchi(nodes);
+			creaArchi(nodes,0.3);
 			
 			//-----------------------------------ANIMAZIONI----------------------------------------------------------------
 			
@@ -198,10 +198,6 @@
 					console.log('Sfera cliccata!');
 					sphereClicked = true;
 
-					for(var l=0;l<nodes.length/2;l++){
-						nodes[l].position.set(nodes[l].position.x*1/1.5,nodes[l].position.y*1/1.5,nodes[l].position.z*1/1.5);
-						subSphere.add(nodes[l]);
-					}
 					var mat = new THREE.MeshBasicMaterial({
 						color: 0xffffff,
 						transparent: true, // Imposta il materiale come trasparente
@@ -209,10 +205,19 @@
 						depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 					});
 					subSphere.material=mat;
-					console.log(subSphere.children);
-					console.log(nodes);
+
+					var nuoviNodi=[];
+					for (var i = 0; i < 800; i++) {
+						var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+						var position = generateRandomCoordinates(1);
+						node.position.set(position.x, position.y, position.z);
+						nuoviNodi.push(node);
+						subSphere.add(node);
+					}
+					console.log(nuoviNodi);
 					
-					//creaArchi(nuoviNodi);
+					
+					creaArchi(nuoviNodi,0.15);
 					setTimeout(function() {
 						sphereClicked = false;
 					}, 4000);
@@ -254,7 +259,7 @@
             animate();
         }
 		
-		function creaArchi(nodes){
+		function creaArchi(nodes, minDist){
             var lineMaterial = new THREE.LineBasicMaterial({ color: 0x006400, opacity: 0.75}); // Colore della linea
 			// Aggiungi gli archi alla sfera principale
 			for(var i=0; i<nodes.length; i++){
@@ -266,7 +271,7 @@
 					var dz = nodoA.position.z - nodoB.position.z;
 					var distance = dx * dx + dy * dy + dz * dz;
 					
-					if(nodoA.parent === nodoB.parent && distance <= 0.3*0.3){		
+					if(nodoA.parent === nodoB.parent && distance <= minDist*minDist){		
 						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
 						
 						nodoA.parent.add(line);
@@ -324,7 +329,8 @@
 						s.position.z -= 0.05;
 						s.position.x += 0.05;
 						s.position.y += 0.05;
-						s.material.opacity -= 0.0002;
+						s.material.opacity -= 0.0004;
+						console.log(s.material.opacity);
 						if(s.material.opacity<=0)scene.remove(s);
 						
 					}
