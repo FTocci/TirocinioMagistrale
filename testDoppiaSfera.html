@@ -83,7 +83,6 @@
 			
 			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
 			// Crea un materiale verde scuro
-			//var materialSubSphere = new THREE.MeshPhongMaterial({ color: 0x006400 }); // Colore verde scuro
 			
 			var textureLoader = new THREE.TextureLoader();
 			var texture = textureLoader.load("textures/greenTexture.jpg");
@@ -217,10 +216,10 @@
 					console.log(nuoviNodi);
 					
 					
-					creaArchi(nuoviNodi,0.15);
+					creaArchi(nuoviNodi,0.2);
 					setTimeout(function() {
 						sphereClicked = false;
-					}, 4000);
+					}, 5000);
 					
 				}
 			});
@@ -304,20 +303,7 @@
 				
 				transparentSphere4.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3500)))/500;
 				transparentSphere4.rotation.y += 0.007;
-				
-				//console.log(Math.sin(new Date().getTime() / 3000));
-				
-				/*	VERSIONE CON VALORI FISSI
-					transparentSphere.rotation.x += 0.0050;
-					transparentSphere.rotation.y += 0.005;
-
-					transparentSphere2.rotation.x += 0.0047
-					transparentSphere2.rotation.y += 0.005;
-
-					transparentSphere3.rotation.x += 0.0053;
-					transparentSphere3.rotation.y += 0.005;
-				*/
-				
+								
                 subSphere.rotation.y += 0.01;
             }
 			
@@ -330,19 +316,14 @@
 						s.position.x += 0.05;
 						s.position.y += 0.05;
 						s.material.opacity -= 0.0004;
-						console.log(s.material.opacity);
-						if(s.material.opacity<=0)scene.remove(s);
-						
+						if(s.material.opacity<=0) scene.remove(s);						
 					}
 				}
 				scaleFactor+=0.002;				
 				subSphere.scale.set(scaleFactor, scaleFactor, scaleFactor);
 			}
-
             renderer.render(scene, camera);
         }
-		
-		
 		
 		// Ridimensionamento della finestra
         window.addEventListener('resize', () => {
