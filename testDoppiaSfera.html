@@ -27,7 +27,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Variabili globali
-        var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false, subSphere, nodes, scaleFactor = 1;
+        var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false;
+		var subSphere = [], nodes, scaleFactor = 1, colorCounter=0, colorNodes = [], colorTextures = [], colorLines = [];
+		var spheres = [];
+		 
         // Funzione per inizializzare la scena
         function init() {
             // Creiamo una scena
@@ -36,7 +39,7 @@
 			
 			var lontananza = 10;
             // Creiamo una telecamera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+8);
             camera.position.z = lontananza;
 			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
@@ -45,14 +48,35 @@
             renderer = new THREE.WebGLRenderer();
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
+			
+			//-------------------------------------------CREAZIONE TEXTURE COLORI--------------------------------------------------
+			var textureLoader = new THREE.TextureLoader();
+			colorTextures[0]= textureLoader.load("textures/BlueTexture.jpg");
+			colorTextures[1]= textureLoader.load("textures/LightBlueTexture.jpg");
+			colorTextures[2]= textureLoader.load("textures/GreenTexture.jpg");
+			colorTextures[3]= textureLoader.load("textures/YellowTexture.jpg");
+			colorTextures[4]= textureLoader.load("textures/RedTexture.jpg");
+			
+			colorNodes[0] = new THREE.MeshLambertMaterial({ color: 0x0000FF });
+			colorNodes[1] = new THREE.MeshLambertMaterial({ color: 0x00FFFF });
+			colorNodes[2] = new THREE.MeshLambertMaterial({ color: 0x00FF00 });
+			colorNodes[3] = new THREE.MeshLambertMaterial({ color: 0xFFFF00 });
+			colorNodes[4] = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
+			
+			colorLines[0] = new THREE.LineBasicMaterial({ color: 0x0000FF, opacity: 0.75});
+			colorLines[1] = new THREE.LineBasicMaterial({ color: 0x00FFFF, opacity: 0.75});
+			colorLines[2] = new THREE.LineBasicMaterial({ color: 0x00FF00, opacity: 0.75});
+			colorLines[3] = new THREE.LineBasicMaterial({ color: 0xFFFF00, opacity: 0.75});
+			colorLines[4] = new THREE.LineBasicMaterial({ color: 0xFF0000, opacity: 0.75});
+
 
 			//--------------------------------------------SFERA TRASPARENTE--------------------------------------------------------
             // Creiamo una sfera da posizionare al centro della scena
-			var geometry = new THREE.SphereGeometry(1.5, 32, 32);
-			var geometry2 = new THREE.SphereGeometry(1.49, 32, 32);
-			var geometry3 = new THREE.SphereGeometry(1.48, 32, 32);
-			var geometry4 = new THREE.SphereGeometry(1.51, 32, 32);
-			var geometryClick = new THREE.SphereGeometry(1.7, 32, 32);
+			var geometry = new THREE.SphereGeometry(1.8, 32, 32);
+			var geometry2 = new THREE.SphereGeometry(1.79, 32, 32);
+			var geometry3 = new THREE.SphereGeometry(1.78, 32, 32);
+			var geometry4 = new THREE.SphereGeometry(1.81, 32, 32);
+			var geometryClick = new THREE.SphereGeometry(2.5, 32, 32);
 
 			// Creiamo un materiale trasparente
 			var material = new THREE.MeshBasicMaterial({
@@ -81,37 +105,11 @@
 			scene.add(transparentSphere4);
 			scene.add(sphereClick);
 			
+			spheres=[transparentSphere,transparentSphere2,transparentSphere3,transparentSphere4, sphereClick];
+			
 			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
-			// Crea un materiale verde scuro
 			
-			var textureLoader = new THREE.TextureLoader();
-			var texture = textureLoader.load("textures/greenTexture.jpg");
-			var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
-			
-			// Crea una geometria sferica
-			var geometrySubSphere = new THREE.SphereGeometry(1, 16, 16);
-
-			// Crea una mesh utilizzando la geometria e il materiale
-			subSphere = new THREE.Mesh(geometrySubSphere, materialSubSphere);
-			subSphere.position.set(transparentSphere.position.x, transparentSphere.position.y, transparentSphere.position.z);
-			scene.add(subSphere);
-			
-			//----------------------------------SFERE EXTRA------------------------------------------------------------------------
-			// Crea un materiale verde scuro
-			var materialSphere2 = new THREE.MeshPhongMaterial({ color: 0x006400 }); // Colore verde scuro
-
-			// Crea una geometria sferica
-			var geometrySphere2 = new THREE.SphereGeometry(1, 32, 32);
-
-			// Crea una mesh utilizzando la geometria e il materiale
-			var Sphere2 = new THREE.Mesh(geometrySphere2, materialSphere2);
-			Sphere2.position.set(-4,2, 0);
-			scene.add(Sphere2);
-
-			// Crea una mesh utilizzando la geometria e il materiale
-			var Sphere2 = new THREE.Mesh(geometrySphere2, materialSphere2);
-			Sphere2.position.set(4,-2, 0);
-			scene.add(Sphere2);
+			generaNucleo();
 			
 			//----------------------------------LUCI-------------------------------------------------------------------------------
 			// Aggiungi una luce ambientale per illuminare la scena
@@ -126,41 +124,17 @@
 			//---------------------------------GRAFO--------------------------------------------------------------------------------
             // Creazione del grafo
             var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
-			var nodeMaterial = new THREE.MeshLambertMaterial({ color: 0x00AA00 });
-            var nodeMaterial2 = new THREE.MeshLambertMaterial({ color: 0xffffff });
-            var lineMaterial = new THREE.LineBasicMaterial({ color: 0x006400, opacity: 0.75}); // Colore della linea
+			var nodeMaterial = colorNodes[0];
 
 			// Numero di nodi da generare
 			var numNodes = 1600;
 			nodes = [];
 			var lines = [];
-
-			// Creazione delle coordinate
-			function generateRandomCoordinates(raggio) {
-				var u = Math.random(); // Uniformemente distribuito tra 0 e 1
-				var v = Math.random(); // Uniformemente distribuito tra 0 e 1
-
-				var theta = 2 * Math.PI * u; // Angolo orizzontale da 0 a 2π
-				var phi = Math.acos(2 * v - 1); // Angolo verticale da 0 a π
-				 
-				
-				var x = Math.sin(phi) * Math.cos(theta); // Calcolo delle coordinate sferiche
-				var y = Math.sin(phi) * Math.sin(theta);
-				var z = Math.cos(phi);
-
-				// Moltiplica per il raggio della sfera (1.5)
-				var radius = raggio;
-				x *= radius;
-				y *= radius;
-				z *= radius;
-
-				return { x, y, z };
-			}
 			
 			// Creazione dei nodi
 			for (var i = 0; i < numNodes; i++) {
 				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-				var position = generateRandomCoordinates(1.5);
+				var position = generateRandomCoordinates(1.8);
 				node.position.set(position.x, position.y, position.z);
 				nodes.push(node);
 			}
@@ -191,7 +165,7 @@
 
 				// Trova gli oggetti intersecati dal raycaster
 				const intersects = raycaster.intersectObjects(scene.children, true);
-
+				
 				// Verifica se la sfera è stata cliccata
 				if (intersects.length > 0 && intersects[0].object === sphereClick) {//ciclo che genera questa parte e scorre le sphere click
 					console.log('Sfera cliccata!');
@@ -203,22 +177,16 @@
 						opacity: 0.2, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
 						depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 					});
-					subSphere.material=mat;
-
-					var nuoviNodi=[];
-					for (var i = 0; i < 800; i++) {
-						var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-						var position = generateRandomCoordinates(1);
-						node.position.set(position.x, position.y, position.z);
-						nuoviNodi.push(node);
-						subSphere.add(node);
-					}
-					console.log(nuoviNodi);
 					
+					subSphere[colorCounter].material=mat;
+					colorCounter++;
+					generaNucleo();
 					
-					creaArchi(nuoviNodi,0.2);
 					setTimeout(function() {
 						sphereClicked = false;
+						sphereClick = new THREE.Mesh(geometryClick, materialClick);	
+						scene.add(sphereClick);
+						spheres = [subSphere[colorCounter-1], sphereClick];
 					}, 5000);
 					
 				}
@@ -235,7 +203,6 @@
 			// Ottieni il riferimento al bottone
 			var zoomButtonIn = document.getElementById("zoomButtonIn");
 			var zoomButtonOut = document.getElementById("zoomButtonOut");
-			console.log(transparentSphere);
 			
 			var zoomCount=0;
 			// Aggiungi un gestore di eventi al bottone
@@ -259,7 +226,7 @@
         }
 		
 		function creaArchi(nodes, minDist){
-            var lineMaterial = new THREE.LineBasicMaterial({ color: 0x006400, opacity: 0.75}); // Colore della linea
+            var lineMaterial = colorLines[colorCounter]; // Colore della linea
 			// Aggiungi gli archi alla sfera principale
 			for(var i=0; i<nodes.length; i++){
 				nodoA = nodes[i];
@@ -278,6 +245,52 @@
 				}
 
 			}
+		}
+		
+		function generaNucleo(){
+			var texture = colorTextures[colorCounter];
+			var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
+			
+			// Crea una geometria sferica
+			var geometrySubSphere = new THREE.SphereGeometry(1.3-0.15*colorCounter, 16, 16);
+
+			// Crea una mesh utilizzando la geometria e il materiale
+			subSphere[colorCounter] = new THREE.Mesh(geometrySubSphere, materialSubSphere);
+			subSphere[colorCounter].position.set(transparentSphere.position.x, transparentSphere.position.y, transparentSphere.position.z);
+			scene.add(subSphere[colorCounter]);
+			
+			var nuoviNodi=[];
+            var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
+			var nodeMaterial = colorNodes[colorCounter];
+			for (var i = 0; i < 800/(colorCounter+1); i++) {
+				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+				var position = generateRandomCoordinates(1.3-0.15*colorCounter);
+				node.position.set(position.x, position.y, position.z);
+				nuoviNodi.push(node);
+				subSphere[colorCounter].add(node);
+			}
+			
+			creaArchi(nuoviNodi,0.2);
+		}
+		
+		// Creazione delle coordinate
+		function generateRandomCoordinates(raggio) {
+			var u = Math.random(); // Uniformemente distribuito tra 0 e 1
+			var v = Math.random(); // Uniformemente distribuito tra 0 e 1
+
+			var theta = 2 * Math.PI * u; // Angolo orizzontale da 0 a 2π
+			var phi = Math.acos(2 * v - 1); // Angolo verticale da 0 a π 
+				
+			var x = Math.sin(phi) * Math.cos(theta); // Calcolo delle coordinate sferiche
+			var y = Math.sin(phi) * Math.sin(theta);
+			var z = Math.cos(phi);
+
+			// Moltiplica per il raggio della sfera (1.5)
+			var radius = raggio;
+			x *= radius;
+			y *= radius;
+			z *= radius;
+			return { x, y, z };
 		}
 
         // Funzione per animare la scena
@@ -304,23 +317,24 @@
 				transparentSphere4.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3500)))/500;
 				transparentSphere4.rotation.y += 0.007;
 								
-                subSphere.rotation.y += 0.01;
+                subSphere[colorCounter].rotation.y += 0.01;
+                if(colorCounter>0)
+					subSphere[colorCounter-1].rotation.y += 0.01;
             }
 			
-			var spheres=[transparentSphere,transparentSphere2,transparentSphere3,transparentSphere4,sphereClick]; //per ampliare basta cambiare contenuto array
 			if(sphereClicked){
+				scaleFactor+=0.0012;							
 				for(var k=0;k<spheres.length;k++){
 					s=spheres[k];
-					if (s.position.z > -30) {
-						s.position.z -= 0.05;
-						s.position.x += 0.05;
-						s.position.y += 0.05;
-						s.material.opacity -= 0.0004;
-						if(s.material.opacity<=0) scene.remove(s);						
+					if (s.position.z > -80) {
+						s.material.opacity -= 0.00025;
+						s.scale.x += 0.125;
+						s.scale.y += 0.125;
+						s.scale.z += 0.125;
+						if(s.material.opacity<0) scene.remove(s);						
 					}
 				}
-				scaleFactor+=0.002;				
-				subSphere.scale.set(scaleFactor, scaleFactor, scaleFactor);
+				subSphere[colorCounter-1].scale.set(scaleFactor, scaleFactor, scaleFactor);
 			}
             renderer.render(scene, camera);
         }
