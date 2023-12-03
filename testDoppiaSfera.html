@@ -29,7 +29,7 @@
         // Variabili globali
         var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false;
 		var subSphere = [], nodes, scaleFactor = 1, colorCounter=0, colorNodes = [], colorTextures = [], colorLines = [];
-		var spheres = [];
+		var spheres = [], initial = true;
 		 
         // Funzione per inizializzare la scena
         function init() {
@@ -109,8 +109,6 @@
 			
 			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
 			
-			generaNucleo();
-			
 			//----------------------------------LUCI-------------------------------------------------------------------------------
 			// Aggiungi una luce ambientale per illuminare la scena
 			var ambientLight = new THREE.AmbientLight(0x404040);
@@ -124,7 +122,7 @@
 			//---------------------------------GRAFO--------------------------------------------------------------------------------
             // Creazione del grafo
             var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
-			var nodeMaterial = colorNodes[0];
+			var nodeMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 });
 
 			// Numero di nodi da generare
 			var numNodes = 1600;
@@ -148,6 +146,8 @@
 			}
 			
 			creaArchi(nodes,0.3);
+			initial=false;
+			generaNucleo();
 			
 			//-----------------------------------ANIMAZIONI----------------------------------------------------------------
 			
@@ -167,7 +167,7 @@
 				const intersects = raycaster.intersectObjects(scene.children, true);
 				
 				// Verifica se la sfera è stata cliccata
-				if (intersects.length > 0 && intersects[0].object === sphereClick) {//ciclo che genera questa parte e scorre le sphere click
+				if (intersects.length > 0 && intersects[0].object === sphereClick) {
 					console.log('Sfera cliccata!');
 					sphereClicked = true;
 
@@ -226,7 +226,10 @@
         }
 		
 		function creaArchi(nodes, minDist){
-            var lineMaterial = colorLines[colorCounter]; // Colore della linea
+			if(initial)
+				var lineMaterial = new THREE.LineBasicMaterial({ color: 0x808080, opacity: 0.75});
+			else			
+				var lineMaterial = colorLines[colorCounter]; // Colore della linea
 			// Aggiungi gli archi alla sfera principale
 			for(var i=0; i<nodes.length; i++){
 				nodoA = nodes[i];
@@ -245,6 +248,7 @@
 				}
 
 			}
+
 		}
 		
 		function generaNucleo(){
