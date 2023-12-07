@@ -1,76 +1,368 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Sphere Animation</title>
+    <meta charset="utf-8">
+    <title>Three.js</title>
     <style>
         body { margin: 0; }
-        canvas { display: block; }
+         button {
+            position: absolute;
+            z-index: 1;
+            background-color: gray;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
-    <script src="https://threejs.org/build/three.js"></script>
+    <button id="zoomButtonIn" style="top: 10px; left: 10px;">Zoom Z</button>
+    <button id="zoomButtonOut" style="top: 10px; left: 120px;">De-Zoom Z</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        // Variabili globali
+        var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false;
+		var subSphere = [], nodes, scaleFactor = 1, colorCounter=0, colorNodes = [], colorTextures = [], colorLines = [];
+		var spheres = [], initial = true;
+		 
+        // Funzione per inizializzare la scena
+        function init() {
+            // Creiamo una scena
+            scene = new THREE.Scene();
+			scene.background = new THREE.TextureLoader().load( "textures/planetgalaxybackround.jpg" );
+			
+			var lontananza = 20;
+            // Creiamo una telecamera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+8);
+            camera.position.z = lontananza;
+			camera.position.y=10;
+			camera.lookAt(0,0,0);
+			camera.zoom = 1.9;
+			camera.updateProjectionMatrix();
 
-        // Inizializzazione della scena
-        var scene = new THREE.Scene();
-        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        var renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+            // Creiamo un renderizzatore
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+			
+			//-------------------------------------------CREAZIONE TEXTURE COLORI--------------------------------------------------
+			var textureLoader = new THREE.TextureLoader();
+			colorTextures[0]= textureLoader.load("textures/BlueTexture.jpg");
+			colorTextures[1]= textureLoader.load("textures/LightBlueTexture.jpg");
+			colorTextures[2]= textureLoader.load("textures/GreenTexture.jpg");
+			colorTextures[3]= textureLoader.load("textures/YellowTexture.jpg");
+			colorTextures[4]= textureLoader.load("textures/RedTexture.jpg");
+			
+			colorNodes[0] = new THREE.MeshLambertMaterial({ color: 0x0000FF });
+			colorNodes[1] = new THREE.MeshLambertMaterial({ color: 0x00FFFF });
+			colorNodes[2] = new THREE.MeshLambertMaterial({ color: 0x00FF00 });
+			colorNodes[3] = new THREE.MeshLambertMaterial({ color: 0xFFFF00 });
+			colorNodes[4] = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
+			
+			colorLines[0] = new THREE.LineBasicMaterial({ color: 0x0000FF, opacity: 0.75});
+			colorLines[1] = new THREE.LineBasicMaterial({ color: 0x00FFFF, opacity: 0.75});
+			colorLines[2] = new THREE.LineBasicMaterial({ color: 0x00FF00, opacity: 0.75});
+			colorLines[3] = new THREE.LineBasicMaterial({ color: 0xFFFF00, opacity: 0.75});
+			colorLines[4] = new THREE.LineBasicMaterial({ color: 0xFF0000, opacity: 0.75});
 
-        // Creazione della sfera
-        var geometry = new THREE.SphereGeometry(1, 32, 32);
-        var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        var sphere = new THREE.Mesh(geometry, material);
-        var sphere2 = new THREE.Mesh(geometry, material);
-		sphere2.position.set(-3,0,0);
-        scene.add(sphere);
-		scene.add(sphere2);
-		//sphere.add(sphere2);
-        
-		var spheres=[sphere,sphere2];
-        // Creazione dell'animazione
-        var positionTarget = new THREE.Vector3(5, 5, 0);
-        var animationClip = new THREE.AnimationClip('sphereAnimation', 1, [new THREE.VectorKeyframeTrack('.position', [0, 1], [0, 0, 0, positionTarget.x, positionTarget.y, positionTarget.z])]);
-        var mixer = new THREE.AnimationMixer(sphere);
-        var action = mixer.clipAction(animationClip);
 
-        // Aggiunta dell'ascoltatore per la barra spaziatrice
-        var spaceBarPressed = false;
-        document.addEventListener('keydown', function (event) {
-            if (event.code === 'Space') {
-                spaceBarPressed = true;
-                action.play();
-            }
-        });
+			//--------------------------------------------SFERA TRASPARENTE--------------------------------------------------------
+            // Creiamo una sfera da posizionare al centro della scena
+			var geometry = new THREE.SphereGeometry(1.8, 32, 32);
+			var geometry2 = new THREE.SphereGeometry(1.79, 32, 32);
+			var geometry3 = new THREE.SphereGeometry(1.78, 32, 32);
+			var geometry4 = new THREE.SphereGeometry(1.81, 32, 32);
+			var geometryClick = new THREE.SphereGeometry(2.5, 32, 32);
 
-        document.addEventListener('keyup', function (event) {
-            if (event.code === 'Space') {
-                spaceBarPressed = false;
-                //action.stop();
-            }
-        });
+			// Creiamo un materiale trasparente
+			var material = new THREE.MeshBasicMaterial({
+				color: 0xffffff,
+				transparent: true, // Imposta il materiale come trasparente
+				opacity: 0.1, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
+			});
+			var materialClick = new THREE.MeshBasicMaterial({
+				color: 0xffffff,
+				transparent: true, // Imposta il materiale come trasparente
+				opacity: 0, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
+			});
 
-        // Funzione di rendering
+			// Creiamo la mesh della sfera utilizzando il materiale
+			transparentSphere = new THREE.Mesh(geometry, material);			
+			transparentSphere2 = new THREE.Mesh(geometry2, material);			
+			transparentSphere3 = new THREE.Mesh(geometry3, material);			
+			transparentSphere4 = new THREE.Mesh(geometry4, material);			
+			transparentSphere5 = new THREE.Mesh(geometry4, material);			
+			transparentSphere6 = new THREE.Mesh(geometry4, material);			
+			sphereClick = new THREE.Mesh(geometryClick, materialClick);	
+			
+			transparentSphere.position.set(-5,0,3);
+			transparentSphere2.position.set(-12,0,-3);
+			transparentSphere3.position.set(-5,0,-5);
+			transparentSphere4.position.set(2,0,5);
+			transparentSphere5.position.set(8,0,-2);
+			transparentSphere6.position.set(3,0,-5);
+			
+			scene.add(transparentSphere);
+			scene.add(transparentSphere2);
+			scene.add(transparentSphere3);
+			scene.add(transparentSphere4);
+			scene.add(transparentSphere5);
+			scene.add(transparentSphere6);
+			scene.add(sphereClick);
+			
+			spheres=[transparentSphere,transparentSphere2,transparentSphere3,transparentSphere4, sphereClick];
+			
+			
+			//----------------------------------LUCI-------------------------------------------------------------------------------
+			// Aggiungi una luce ambientale per illuminare la scena
+			var ambientLight = new THREE.AmbientLight(0x404040);
+			scene.add(ambientLight);
+
+			// Crea una luce direzionale
+			var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+			directionalLight.position.set(5, 10, 1);
+			scene.add(directionalLight);
+			
+			//---------------------------------GRAFO--------------------------------------------------------------------------------
+            // Creazione del grafo
+            var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
+			var nodeMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 });
+
+			// Numero di nodi da generare
+			var numNodes = 2000;
+			nodes = [];
+			var lines = [];
+			
+			// Creazione dei nodi
+			for (var i = 0; i < numNodes; i++) {
+				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+				var position = generateRandomCoordinates(1.8);
+				node.position.set(position.x, position.y, position.z);
+				nodes.push(node);
+			}
+			
+			// Aggiungi i nodi alle sfera principale
+			for (var i = 0; i < numNodes; i++) {
+				if(i %6 === 0) transparentSphere.add(nodes[i]);
+				if(i %6 === 1) transparentSphere2.add(nodes[i]);	
+				if(i %6 === 2) transparentSphere3.add(nodes[i]);	
+				if(i %6 === 3) transparentSphere4.add(nodes[i]);	
+				if(i %6 === 4) transparentSphere5.add(nodes[i]);	
+				if(i %6 === 5) transparentSphere6.add(nodes[i]);	
+			}
+			
+			creaArchi(nodes,0.3);
+			initial=false;
+			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
+
+			//generaNucleo();
+			
+			//-----------------------------------ANIMAZIONI----------------------------------------------------------------
+			
+			// Gestione del click sulla sfera
+			window.addEventListener('mousedown', (event) => {
+				const mouse = new THREE.Vector2();
+				const raycaster = new THREE.Raycaster();
+
+				// Calcola le coordinate del mouse
+				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+				mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+				// Imposta il raycaster
+				raycaster.setFromCamera(mouse, camera);
+
+				// Trova gli oggetti intersecati dal raycaster
+				const intersects = raycaster.intersectObjects(scene.children, true);
+				
+				// Verifica se la sfera è stata cliccata
+				if (intersects.length > 0 && intersects[0].object === sphereClick) {
+					console.log('Sfera cliccata!');
+					sphereClicked = true;
+
+					var mat = new THREE.MeshBasicMaterial({
+						color: 0xffffff,
+						transparent: true, // Imposta il materiale come trasparente
+						opacity: 0.2, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
+						depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
+					});
+					
+					subSphere[colorCounter].material=mat;
+					colorCounter++;
+					generaNucleo();
+					
+					setTimeout(function() {
+						sphereClicked = false;
+						sphereClick = new THREE.Mesh(geometryClick, materialClick);	
+						scene.add(sphereClick);
+						spheres = [subSphere[colorCounter-1], sphereClick];
+					}, 5000);
+					
+				}
+			});
+			
+
+			//-----------------------------------BOTTONI E FUNZIONALITà----------------------------------------------------
+            // Registriamo l'evento per la pressione del tasto "Space"
+            document.addEventListener('keydown', function (event) {
+                if (event.keyCode === 32) {
+                    isRotating = !isRotating;
+                }
+            });
+			// Ottieni il riferimento al bottone
+			var zoomButtonIn = document.getElementById("zoomButtonIn");
+			var zoomButtonOut = document.getElementById("zoomButtonOut");
+			
+			var zoomCount=0;
+			// Aggiungi un gestore di eventi al bottone
+			zoomButtonIn.addEventListener("click", function() {
+				// Modifica la posizione Z della telecamera
+				var zoomAmount = 1; // Modifica questa quantità come desideri
+				camera.position.z -= zoomAmount;
+				zoomCount += 1;
+			});
+			zoomButtonOut.addEventListener("click", function() {
+				// Modifica la posizione Z della telecamera
+				if(zoomCount>0){
+					var zoomAmount = 1; // Modifica questa quantità come desideri
+					camera.position.z += zoomAmount;
+					zoomCount -= 1;
+				}
+				
+			});
+
+            animate();
+        }
+		
+		function creaArchi(nodes, minDist){
+			if(initial)
+				var lineMaterial = new THREE.LineBasicMaterial({ color: 0x808080, opacity: 0.75});
+			else			
+				var lineMaterial = colorLines[colorCounter]; // Colore della linea
+			// Aggiungi gli archi alla sfera principale
+			for(var i=0; i<nodes.length; i++){
+				nodoA = nodes[i];
+				for(var j = i+1; j < nodes.length; j++){
+					nodoB = nodes[j];
+					var dx = nodoA.position.x - nodoB.position.x;
+					var dy = nodoA.position.y - nodoB.position.y;
+					var dz = nodoA.position.z - nodoB.position.z;
+					var distance = dx * dx + dy * dy + dz * dz;
+					
+					if(nodoA.parent === nodoB.parent && distance <= minDist*minDist){		
+						var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([nodoA.position, nodoB.position]), lineMaterial);
+						
+						nodoA.parent.add(line);
+					}
+				}
+
+			}
+
+		}
+		
+		function generaNucleo(){
+			var texture = colorTextures[colorCounter];
+			var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
+			
+			// Crea una geometria sferica
+			var geometrySubSphere = new THREE.SphereGeometry(1.3-0.15*colorCounter, 16, 16);
+
+			// Crea una mesh utilizzando la geometria e il materiale
+			subSphere[colorCounter] = new THREE.Mesh(geometrySubSphere, materialSubSphere);
+			subSphere[colorCounter].position.set(transparentSphere.position.x, transparentSphere.position.y, transparentSphere.position.z);
+			scene.add(subSphere[colorCounter]);
+			
+			var nuoviNodi=[];
+            var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
+			var nodeMaterial = colorNodes[colorCounter];
+			for (var i = 0; i < 800/(colorCounter+1); i++) {
+				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+				var position = generateRandomCoordinates(1.3-0.15*colorCounter);
+				node.position.set(position.x, position.y, position.z);
+				nuoviNodi.push(node);
+				subSphere[colorCounter].add(node);
+			}
+			
+			creaArchi(nuoviNodi,0.2);
+		}
+		
+		// Creazione delle coordinate
+		function generateRandomCoordinates(raggio) {
+			var u = Math.random(); // Uniformemente distribuito tra 0 e 1
+			var v = Math.random(); // Uniformemente distribuito tra 0 e 1
+
+			var theta = 2 * Math.PI * u; // Angolo orizzontale da 0 a 2π
+			var phi = Math.acos(2 * v - 1); // Angolo verticale da 0 a π 
+				
+			var x = Math.sin(phi) * Math.cos(theta); // Calcolo delle coordinate sferiche
+			var y = Math.sin(phi) * Math.sin(theta);
+			var z = Math.cos(phi);
+
+			// Moltiplica per il raggio della sfera (1.5)
+			var radius = raggio;
+			x *= radius;
+			y *= radius;
+			z *= radius;
+			return { x, y, z };
+		}
+
+        // Funzione per animare la scena
         function animate() {
             requestAnimationFrame(animate);
 
-            // Verifica se la barra spaziatrice è premuta e aggiorna l'animazione
-            if (spaceBarPressed) {
-                mixer.update(0.01); // Velocità desiderata animazione
+            if (isRotating) {
+				transparentSphere.rotation.x += 0.005;
+				transparentSphere.rotation.y += 0.005;
+				transparentSphere2.rotation.x += 0.005;
+				transparentSphere2.rotation.y += 0.004;
+				transparentSphere3.rotation.x += 0.005;
+				transparentSphere3.rotation.y += 0.004;
+				transparentSphere4.rotation.x += 0.005;
+				transparentSphere4.rotation.y += 0.004;
+				transparentSphere5.rotation.x += 0.005;
+				transparentSphere5.rotation.y += 0.004;
+				transparentSphere6.rotation.x += 0.005;
+				transparentSphere6.rotation.y += 0.004;
             }
-
+			
+			if(sphereClicked){
+				scaleFactor+=0.0012;							
+				for(var k=0;k<spheres.length;k++){
+					s=spheres[k];
+					if (s.position.z > -80) {
+						s.material.opacity -= 0.00025;
+						s.scale.x += 0.125;
+						s.scale.y += 0.125;
+						s.scale.z += 0.125;
+						if(s.material.opacity<0) scene.remove(s);						
+					}
+				}
+				subSphere[colorCounter-1].scale.set(scaleFactor, scaleFactor, scaleFactor);
+			}
             renderer.render(scene, camera);
         }
+		
+		// Ridimensionamento della finestra
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
 
-        // Configurazione della camera
-        camera.position.z = 5;
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
 
-        // Avvio dell'animazione
-        animate();
+            renderer.setSize(newWidth, newHeight);
+        });
+		
 
+        // Inizializziamo la scena
+        init();
     </script>
 </body>
 </html>

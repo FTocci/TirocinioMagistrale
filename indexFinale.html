@@ -29,7 +29,16 @@
         // Variabili globali
         var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false;
 		var livelli = [], nodes, scaleFactor = 1, colorCounter=0, colorNodes = [], colorTextures = [], colorLines = [];
-		var spheres = [], initial = true;
+		var initial = true;
+		var stageArray = [];
+		var clickCoordinates = [];
+		var stage = [];
+		var stageCounter = 0;
+		var stagePrecedente, riga;
+		var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: true })
+		var geometry, geometry2, geometry3, geometry4, geometryClick, material, materialClick;
+		
+		var rowCounter = 0; 
 		 
         // Funzione per inizializzare la scena
         function init() {
@@ -72,41 +81,38 @@
 
 			//--------------------------------------------SFERA TRASPARENTE--------------------------------------------------------
             // Creiamo una sfera da posizionare al centro della scena
-			var geometry = new THREE.SphereGeometry(1.8, 32, 32);
-			var geometry2 = new THREE.SphereGeometry(1.79, 32, 32);
-			var geometry3 = new THREE.SphereGeometry(1.78, 32, 32);
-			var geometry4 = new THREE.SphereGeometry(1.81, 32, 32);
-			var geometryClick = new THREE.SphereGeometry(2.5, 32, 32);
+			geometry = new THREE.SphereGeometry(1.8, 32, 32);
+			geometry2 = new THREE.SphereGeometry(1.79, 32, 32);
+			geometry3 = new THREE.SphereGeometry(1.78, 32, 32);
+			geometry4 = new THREE.SphereGeometry(1.81, 32, 32);
+			geometryClick = new THREE.SphereGeometry(2, 8, 8);
 
 			// Creiamo un materiale trasparente
-			var material = new THREE.MeshBasicMaterial({
+			material = new THREE.MeshBasicMaterial({
 				color: 0xffffff,
 				transparent: true, // Imposta il materiale come trasparente
 				opacity: 0.1, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
 				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 			});
-			var materialClick = new THREE.MeshBasicMaterial({
-				color: 0xffffff,
+			materialClick = new THREE.MeshBasicMaterial({
+				color: 0xff0000,
 				transparent: true, // Imposta il materiale come trasparente
 				opacity: 0, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
 				depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
 			});
 
 			// Creiamo la mesh della sfera utilizzando il materiale
-			transparentSphere = new THREE.Mesh(geometry, material);			
+			transparentSphere = new THREE.Mesh(geometry, material);	
 			transparentSphere2 = new THREE.Mesh(geometry2, material);			
 			transparentSphere3 = new THREE.Mesh(geometry3, material);			
-			transparentSphere4 = new THREE.Mesh(geometry4, material);			
+			transparentSphere4 = new THREE.Mesh(geometry4, material);		
 			sphereClick = new THREE.Mesh(geometryClick, materialClick);	
 			
 			scene.add(transparentSphere);
 			scene.add(transparentSphere2);
 			scene.add(transparentSphere3);
 			scene.add(transparentSphere4);
-			scene.add(sphereClick);
-			
-			spheres=[transparentSphere,transparentSphere2,transparentSphere3,transparentSphere4, sphereClick];
-			
+			scene.add(sphereClick);			
 			
 			//----------------------------------LUCI-------------------------------------------------------------------------------
 			// Aggiungi una luce ambientale per illuminare la scena
@@ -146,9 +152,9 @@
 			
 			creaArchi(nodes,0.3);
 			initial=false;
-			//-----------------------------------SFERA NUCLEO-----------------------------------------------------------------------
-
-			generaNucleo();
+			//-----------------------------------ASSEGNAZIONE IN ARRAY--------------------------------------------------------------
+			stage[0]= [transparentSphere, transparentSphere2, transparentSphere3, transparentSphere4, sphereClick, generaNucleo(transparentSphere)];
+			stageArray[stageCounter] = stage;
 			
 			//-----------------------------------ANIMAZIONI----------------------------------------------------------------
 			
@@ -168,32 +174,34 @@
 				const intersects = raycaster.intersectObjects(scene.children, true);
 				
 				// Verifica se la sfera è stata cliccata
-				if (intersects.length > 0 && intersects[0].object === sphereClick) {
-					console.log('Sfera cliccata!');
-					sphereClicked = true;
-					scaleFactor=1;
-
-					var mat = new THREE.MeshBasicMaterial({
-						color: 0xffffff,
-						transparent: true, // Imposta il materiale come trasparente
-						opacity: 0.2, // Imposta il livello di opacità desiderato (0 = completamente trasparente, 1 = opaco)
-						depthWrite: true // Impedisci che oggetti dietro la sfera siano nascosti
-					});
-					
-					livelli[colorCounter].material=mat;
-					scene.add(transparentSphere);
-					scene.add(transparentSphere2);
-					scene.add(transparentSphere3);
-					colorCounter++;
-					generaNucleo();
-					
-					setTimeout(function() {
-						sphereClicked = false;
-						sphereClick = new THREE.Mesh(geometryClick, materialClick);	
-						scene.add(sphereClick);
-						spheres = [livelli[colorCounter-1], sphereClick];
-					}, 5000);
-					
+				for(var t=0; t < stage.length; t++){
+					if (intersects.length > 0 && intersects[0].object === (stage[t])[4]) {
+						clickCoordinates = [];
+						clickCoordinates[0] = (stage[t])[4].position.x;
+						clickCoordinates[1] = (stage[t])[4].position.y;
+						sphereClicked = true;
+						scaleFactor=1;
+						
+						colorCounter++;
+						stage = [];
+						stageCounter++;
+						updateScene(2);
+						stagePrecedente = stageArray[stageCounter-1];
+						console.log(stagePrecedente);
+						for(var i = 0; i<stagePrecedente.length;i++){
+							if(stagePrecedente[i][4].position.x == clickCoordinates[0] && stagePrecedente[i][4].position.y == clickCoordinates[1]){
+								riga = i;
+								break;
+							}
+						}
+						
+						setTimeout(function() {						
+							sphereClicked = false;
+							
+						}, 10000);
+						
+						
+					}
 				}
 			});
 			
@@ -255,31 +263,73 @@
 
 		}
 		
-		function generaNucleo(){
+		function updateScene(nSfere){
+
+			material = new THREE.MeshBasicMaterial({color: 0xffffff,transparent: true, opacity: 0.1, depthWrite: true });
+			materialClick = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0, depthWrite: true });
+			
+			for(var r=0;r<nSfere;r++){
+				
+				var arr=[];
+				for(var c=0;c<4;c++){
+					arr[c] = new THREE.Mesh(new THREE.SphereGeometry(1.5-(c/100), 32, 32), material);
+					arr[c].position.set((-5+(r*5)),0,-0.01);
+					addNodes(arr[c], 100, 1.5);
+					scene.add(arr[c]);
+				} 	
+				arr[4] = new THREE.Mesh(geometryClick, materialClick);	
+				arr[4].position.set(arr[0].position.x,arr[0].position.y,arr[0].position.z);
+				scene.add(arr[4]);
+				arr[5] = generaNucleo(arr[0]);
+				scene.add(arr[5]);
+				stage[r] = arr;
+			}
+			stageArray[stageCounter]=stage;
+		}
+		
+		function addNodes(sfera, nNodi, raggio){
+		
+			var sphereNodes=[];
+            var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
+			var nodeMaterial = colorNodes[colorCounter-1];
+			for (var i = 0; i < nNodi; i++) {
+				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+				var position = generateRandomCoordinates(1.5);
+				node.position.set(position.x, position.y, position.z);
+				sphereNodes.push(node);
+				sfera.add(node);
+			}
+			colorCounter--;
+			creaArchi(sphereNodes,0.3);
+			colorCounter++;
+			
+		}
+		
+		function generaNucleo(sphere){
 			var texture = colorTextures[colorCounter];
 			var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
 			
 			// Crea una geometria sferica
-			var geometrySubSphere = new THREE.SphereGeometry(1.3-0.05*colorCounter, 16, 16);
+			var geometrySubSphere = new THREE.SphereGeometry(1.3-0.15*colorCounter, 16, 16);
 
 			// Crea una mesh utilizzando la geometria e il materiale
-			livelli[colorCounter] = new THREE.Mesh(geometrySubSphere, materialSubSphere);
-			livelli[colorCounter].position.set(transparentSphere.position.x, transparentSphere.position.y, transparentSphere.position.z);
-			scene.add(livelli[colorCounter]);
+			nucleo = new THREE.Mesh(geometrySubSphere, materialSubSphere);
+			nucleo.position.set(sphere.position.x, sphere.position.y, sphere.position.z);
+			scene.add(nucleo);
 			
 			var nuoviNodi=[];
             var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
 			var nodeMaterial = colorNodes[colorCounter];
 			for (var i = 0; i < 400; i++) {
 				var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-				var position = generateRandomCoordinates(1.3-0.05*colorCounter);
+				var position = generateRandomCoordinates(1.3-0.15*colorCounter);
 				node.position.set(position.x, position.y, position.z);
 				nuoviNodi.push(node);
-				livelli[colorCounter].add(node);
+				nucleo.add(node);
 			}
 			
-			creaArchi(nuoviNodi,0.3);
-
+			//creaArchi(nuoviNodi,0.3);
+			return nucleo;
 		}
 
 	
@@ -316,24 +366,42 @@
 					- Date().getTime(): fornisce timestamp
 					- /2500 determina quanto l'oscillazione varia velocemente (maggiore è il numero, meno è rapida la variazione)
 					- /500: [0,1] --> [0,0.002]*/
-				
-				transparentSphere.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 2750)))/500;
-				transparentSphere.rotation.y += 0.004;
+				for(var r=0;r<stage.length;r++){
+					(stage[r])[0].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 2750)))/500;
+					(stage[r])[0].rotation.y += 0.004;
 
-				transparentSphere2.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3000)))/500;
-				transparentSphere2.rotation.y += 0.005;
+					(stage[r])[1].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3000)))/500;
+					(stage[r])[1].rotation.y += 0.005;
 
-				transparentSphere3.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3250)))/500;
-				transparentSphere3.rotation.y += 0.006;
+					(stage[r])[2].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3250)))/500;
+					(stage[r])[2].rotation.y += 0.006;
+						
+					(stage[r])[3].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3500)))/500;
+					(stage[r])[3].rotation.y += 0.007;
+					
+					(stage[r])[5].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3500)))/500;
+					(stage[r])[5].rotation.y += 0.007;
+				}
 				
-				transparentSphere4.rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3500)))/500;
-				transparentSphere4.rotation.y += 0.007;
             }
 			
 			if(sphereClicked){
-				scaleFactor+=0.0012;							
-				for(var k=0;k<spheres.length;k++){
-					s=spheres[k];
+				scaleFactor+=0.0012;
+				
+				for(var y=0;y<stagePrecedente.length;y++){
+					if(y!=riga){
+						scene.remove((stagePrecedente[y])[0]);
+						scene.remove((stagePrecedente[y])[1]);
+						scene.remove((stagePrecedente[y])[2]);
+						scene.remove((stagePrecedente[y])[3]);
+						scene.remove((stagePrecedente[y])[4]);
+						scene.remove((stagePrecedente[y])[5]);
+					}
+				}
+				console.log(riga);
+				for(var k=0;k<stagePrecedente[riga].length-1;k++){
+					s=stagePrecedente[riga][k];
+					
 					for(var z=0;z<s.children.length;z++){
 						var child=s.children[z];
 						if(child.geometry.type == "SphereGeometry"){
@@ -347,10 +415,11 @@
 					if(s.material.opacity<0) scene.remove(s);						
 
 				}
-				livelli[colorCounter-1].scale.set(scaleFactor, scaleFactor, scaleFactor);
+				scene.remove(stagePrecedente[riga][5]);
 			}
             renderer.render(scene, camera);
         }
+
 		
 		// Ridimensionamento della finestra
         window.addEventListener('resize', () => {
