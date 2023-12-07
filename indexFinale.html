@@ -37,6 +37,7 @@
 		var stagePrecedente, riga;
 		var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: true })
 		var geometry, geometry2, geometry3, geometry4, geometryClick, material, materialClick;
+		var mixers =[];
 		
 		var rowCounter = 0; 
 		 
@@ -46,10 +47,12 @@
             scene = new THREE.Scene();
 			scene.background = new THREE.TextureLoader().load( "textures/planetgalaxybackround.jpg" );
 			
-			var lontananza = 10;
+			var lontananza = 12;
             // Creiamo una telecamera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+8);
             camera.position.z = lontananza;
+			camera.position.y = 3;
+			camera.lookAt(0,0,0);
 			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
 
@@ -176,7 +179,6 @@
 				// Verifica se la sfera è stata cliccata
 				for(var t=0; t < stage.length; t++){
 					if (intersects.length > 0 && intersects[0].object === (stage[t])[4]) {
-						clickCoordinates = [];
 						clickCoordinates[0] = (stage[t])[4].position.x;
 						clickCoordinates[1] = (stage[t])[4].position.y;
 						sphereClicked = true;
@@ -187,17 +189,17 @@
 						stageCounter++;
 						updateScene(2);
 						stagePrecedente = stageArray[stageCounter-1];
-						console.log(stagePrecedente);
-						for(var i = 0; i<stagePrecedente.length;i++){
+						
+						for(var i = 0; i<stagePrecedente.length;i++){			//trova sfera clicked
 							if(stagePrecedente[i][4].position.x == clickCoordinates[0] && stagePrecedente[i][4].position.y == clickCoordinates[1]){
 								riga = i;
 								break;
 							}
 						}
 						
+						createSphereMixer();
 						setTimeout(function() {						
 							sphereClicked = false;
-							
 						}, 10000);
 						
 						
@@ -273,7 +275,7 @@
 				var arr=[];
 				for(var c=0;c<4;c++){
 					arr[c] = new THREE.Mesh(new THREE.SphereGeometry(1.5-(c/100), 32, 32), material);
-					arr[c].position.set((-5+(r*5)),0,-0.01);
+					arr[c].position.set(clickCoordinates[0],clickCoordinates[1],-0.01);
 					addNodes(arr[c], 100, 1.5);
 					scene.add(arr[c]);
 				} 	
@@ -354,6 +356,43 @@
 			z *= radius;
 			return { x, y, z };
 		}
+		
+
+		
+		function createSphereMixer(){
+			for(var m=0;m<stage.length;m++){
+					for(var s=0;s<6;s++){
+						var mixer = new THREE.AnimationMixer((stage[m])[s]);
+						
+						const duration = 10;
+
+						// Punto finale (punto B)
+						var startPosition = new THREE.Vector3((stage[m])[s].position.x, (stage[m])[s].position.y, (stage[m])[s].position.z);
+						var midPosition1 = new THREE.Vector3(0, 0, -5);
+						var midPosition2 = new THREE.Vector3(-2, 0, -2);
+						var midPosition3 = new THREE.Vector3(-2, 0, 2);
+						var endPosition = new THREE.Vector3((m*4), 0, 0);
+
+						// Crea una traccia di animazione per la posizione
+						var positionTrack = new THREE.VectorKeyframeTrack('.position', [0, 1, 2, 3, 6], [
+							startPosition.x, startPosition.y, startPosition.z, // Punto A
+							midPosition1.x, midPosition1.y, midPosition1.z,       // Punto intermedio 1
+							midPosition2.x, midPosition2.y, midPosition2.z,       // Punto intermedio 2
+							midPosition3.x, midPosition3.y, midPosition3.z,       // Punto intermedio 3
+							endPosition.x, endPosition.y, endPosition.z            // Punto B
+						]);
+						// Crea la clip di animazione utilizzando la traccia di posizione
+						var clip = new THREE.AnimationClip('move', duration, [positionTrack]);
+
+						// Aggiungi la clip all'oggetto AnimationMixer
+						var action = mixer.clipAction(clip);
+
+						// Avvia l'animazione
+						action.play();
+						mixers.push(mixer);
+					}
+				}
+		}
 
         // Funzione per animare la scena
         function animate() {
@@ -388,7 +427,7 @@
 			if(sphereClicked){
 				scaleFactor+=0.0012;
 				
-				for(var y=0;y<stagePrecedente.length;y++){
+				for(var y=0;y<stagePrecedente.length;y++){				//rimozione sfere notClicked
 					if(y!=riga){
 						scene.remove((stagePrecedente[y])[0]);
 						scene.remove((stagePrecedente[y])[1]);
@@ -398,8 +437,8 @@
 						scene.remove((stagePrecedente[y])[5]);
 					}
 				}
-				console.log(riga);
-				for(var k=0;k<stagePrecedente[riga].length-1;k++){
+				
+				for(var k=0;k<stagePrecedente[riga].length-1;k++){					//esplosione sfera clicked
 					s=stagePrecedente[riga][k];
 					
 					for(var z=0;z<s.children.length;z++){
@@ -415,7 +454,24 @@
 					if(s.material.opacity<0) scene.remove(s);						
 
 				}
-				scene.remove(stagePrecedente[riga][5]);
+				scene.remove(stagePrecedente[riga][5]);					
+
+				/*for(var m=0;m<stage.length;m++){
+					for(var s=0;s<6;s++){
+						if(m%2==0)
+							makeSphereMovement((stage[m])[s],0.01);
+						else
+							makeSphereMovement((stage[m])[s],-0.01);
+					}
+				}*/
+				
+				for(var mix=0;mix<mixers.length;mix++){
+					mixers[mix].update(0.01);
+				}
+				
+                
+
+				
 			}
             renderer.render(scene, camera);
         }
