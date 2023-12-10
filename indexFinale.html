@@ -28,7 +28,7 @@
     <script>
         // Variabili globali
         var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false;
-		var livelli = [], nodes, scaleFactor = 1, colorCounter=0, colorNodes = [], colorTextures = [], colorLines = [];
+		var livelli = [], nodes, scaleFactor = 1, colorCounter = 0, colorNodes = [], colorTextures = [], colorLines = [];
 		var initial = true;
 		var stageArray = [];
 		var clickCoordinates = [];
@@ -38,7 +38,7 @@
 		var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: true })
 		var geometry, geometry2, geometry3, geometry4, geometryClick, material, materialClick;
 		var mixers =[];
-		var finalPosition = [new THREE.Vector3(0, 0, 3), new THREE.Vector3(-5, 0, 2), new THREE.Vector3(-10, 0, -2), new THREE.Vector3(-5, 2, -5),  new THREE.Vector3(0, 2, -7)], fp = 0;
+		var finalPosition = [new THREE.Vector3(0, 0, 3), new THREE.Vector3(-5, 0, 2), new THREE.Vector3(-10, 0, -1), new THREE.Vector3(-5, 2, -3),  new THREE.Vector3(0, 2, -4)], fp = 0;
 		
 		var rowCounter = 0; 
 		 
@@ -182,6 +182,7 @@
 					if (intersects.length > 0 && intersects[0].object === (stage[t])[4]) {
 						clickCoordinates[0] = (stage[t])[4].position.x;
 						clickCoordinates[1] = (stage[t])[4].position.y;
+						clickCoordinates[2] = (stage[t])[4].position.z;
 						sphereClicked = true;
 						scaleFactor=1;
 						
@@ -279,7 +280,7 @@
 				var arr=[];
 				for(var c=0;c<4;c++){
 					arr[c] = new THREE.Mesh(new THREE.SphereGeometry(1.5-(c/100), 32, 32), material);
-					arr[c].position.set(clickCoordinates[0],clickCoordinates[1],-0.01);
+					arr[c].position.set(clickCoordinates[0],clickCoordinates[1],clickCoordinates[2]-0.01);
 					addNodes(arr[c], 100, 1.5);
 					scene.add(arr[c]);
 				} 	
@@ -373,13 +374,13 @@
 
 						// Punto finale (punto B)
 						var startPosition = new THREE.Vector3((stage[m])[s].position.x, (stage[m])[s].position.y, (stage[m])[s].position.z);
-						var midPosition1 = new THREE.Vector3(0, 0, -3);
-						var midPosition2 = new THREE.Vector3(-2, 0, -2);
-						var midPosition3 = new THREE.Vector3(-2, 0, 2);
+						var midPosition1 = new THREE.Vector3((stage[m])[s].position.x, (stage[m])[s].position.y, (stage[m])[s].position.z-1.5);
+						var midPosition2 = new THREE.Vector3((stage[m])[s].position.x-1, (stage[m])[s].position.y, (stage[m])[s].position.z-1);
+						var midPosition3 = new THREE.Vector3((stage[m])[s].position.x-1, (stage[m])[s].position.y, (stage[m])[s].position.z+1);
 						var endPosition = new THREE.Vector3(finalPosition[fp].x, finalPosition[fp].y, finalPosition[fp].z);
 
 						// Crea una traccia di animazione per la posizione
-						var positionTrack = new THREE.VectorKeyframeTrack('.position', [0, 1, 2, 3, 6], [
+						var positionTrack = new THREE.VectorKeyframeTrack('.position', [0, 1, 3, 4, 6], [
 							startPosition.x, startPosition.y, startPosition.z, // Punto A
 							midPosition1.x, midPosition1.y, midPosition1.z,       // Punto intermedio 1
 							midPosition2.x, midPosition2.y, midPosition2.z,       // Punto intermedio 2
@@ -397,13 +398,13 @@
 						mixers.push(mixer);
 					}
 				fp++;
-				}
+			}
 		}
 
         // Funzione per animare la scena
         function animate() {
             requestAnimationFrame(animate);
-
+			
             if (isRotating) {
                 // Ruotiamo le sfere solo se isRotating è true
 				/* VERSIONE CHE UTILIZZA FUNZIONE SENO E FUNZIONE MODULO
@@ -457,11 +458,12 @@
 					s.scale.x += 0.075;
 					s.scale.y += 0.075;
 					s.scale.z += 0.075;
+					console.log(s.position.z);
 					if(s.material.opacity<0) scene.remove(s);						
 
 				}
 				scene.remove(stagePrecedente[riga][5]);					
-
+				
 				
 				for(var mix=0;mix<mixers.length;mix++){
 					mixers[mix].update(0.025);
