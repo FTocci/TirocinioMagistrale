@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Three.js Sphere Rotation</title>
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script>
+      // Inizializzazione della scena
+      var scene = new THREE.Scene();
+
+      // Creazione della camera
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.z = 5;
+
+      // Creazione del renderer
+      var renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Creazione di un punto centrale
+      var centralPoint = new THREE.Object3D();
+      scene.add(centralPoint);
+
+      // Creazione di tre sfere collocate come figlie del punto centrale
+      var sphere1 = createSphere(0xff0000, 0);
+      var sphere3 = createSphere(0x0000ff, 0);
+
+      centralPoint.add(sphere1);
+      centralPoint.add(sphere3);
+
+      // Animazione della scena
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Rotazione del punto centrale attorno all'asse y quando la barra spaziatrice viene premuta
+        if (isSpacebarPressed) {
+          centralPoint.rotation.y += 0.01;
+		  sphere1.position.x += 0.005;
+		  sphere3.position.x += 0.01;
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      // Funzione di creazione di una sfera
+      function createSphere(color, x) {
+        var geometry = new THREE.SphereGeometry(1, 32, 32);
+        var material = new THREE.MeshBasicMaterial({ color: color });
+        var sphere = new THREE.Mesh(geometry, material);
+        sphere.position.x = x;
+        return sphere;
+      }
+
+      // Gestione dell'evento keydown per la barra spaziatrice
+      var isSpacebarPressed = false;
+      window.addEventListener("keydown", function (event) {
+        if (event.code === "Space") {
+          isSpacebarPressed = true;
+        }
+      });
+
+      // Gestione dell'evento keyup per la barra spaziatrice
+      window.addEventListener("keyup", function (event) {
+        if (event.code === "Space") {
+          isSpacebarPressed = false;
+        }
+      });
+
+      // Ridimensionamento della finestra
+      window.addEventListener("resize", function () {
+        var newWidth = window.innerWidth;
+        var newHeight = window.innerHeight;
+
+        camera.aspect = newWidth / newHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(newWidth, newHeight);
+      });
+
+      animate();
+    </script>
+  </body>
+</html>

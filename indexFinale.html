@@ -27,20 +27,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Variabili globali
-        var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false;
+        var scene, camera, renderer, transparentSphere, isRotating = false, sphereClicked = false, centralPoint;
 		var livelli = [], nodes, scaleFactor = 1, colorCounter = 0, colorNodes = [], colorTextures = [], colorLines = [];
 		var initial = true;
 		var stageArray = [];
 		var clickCoordinates = [];
+		var animationBoolean = false;
 		var stage = [];
 		var stageCounter = 0;
 		var stagePrecedente, riga;
 		var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: true })
 		var geometry, geometry2, geometry3, geometry4, geometryClick, material, materialClick;
 		var mixers =[];
-		var finalPosition = [new THREE.Vector3(0, 0, 3), new THREE.Vector3(-5, 0, 2), new THREE.Vector3(-10, 0, -1), new THREE.Vector3(-5, 2, -3),  new THREE.Vector3(0, 2, -4)], fp = 0;
-		
-		var rowCounter = 0; 
+
+		var levelSpheres = [];
 		 
         // Funzione per inizializzare la scena
         function init() {
@@ -50,17 +50,22 @@
 			
 			var lontananza = 15;
             // Creiamo una telecamera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+8);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, lontananza+15);
             camera.position.z = lontananza;
 			camera.position.y = 3;
 			camera.lookAt(0,0,0);
 			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
+			
+			populateSpheres();
 
             // Creiamo un renderizzatore
             renderer = new THREE.WebGLRenderer();
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
+			
+			centralPoint = new THREE.Object3D();
+			scene.add(centralPoint);
 			
 			//-------------------------------------------CREAZIONE TEXTURE COLORI--------------------------------------------------
 			var textureLoader = new THREE.TextureLoader();
@@ -106,17 +111,25 @@
 			});
 
 			// Creiamo la mesh della sfera utilizzando il materiale
-			transparentSphere = new THREE.Mesh(geometry, material);	
+			transparentSphere = new THREE.Mesh(geometry, material);
 			transparentSphere2 = new THREE.Mesh(geometry2, material);			
 			transparentSphere3 = new THREE.Mesh(geometry3, material);			
 			transparentSphere4 = new THREE.Mesh(geometry4, material);		
 			sphereClick = new THREE.Mesh(geometryClick, materialClick);	
 			
-			scene.add(transparentSphere);
+			
+			/*scene.add(transparentSphere);
 			scene.add(transparentSphere2);
 			scene.add(transparentSphere3);
 			scene.add(transparentSphere4);
-			scene.add(sphereClick);			
+			scene.add(sphereClick);	*/
+			
+			centralPoint.add(transparentSphere);
+			centralPoint.add(transparentSphere2);
+			centralPoint.add(transparentSphere3);
+			centralPoint.add(transparentSphere4);
+			centralPoint.add(sphereClick);	
+			
 			
 			//----------------------------------LUCI-------------------------------------------------------------------------------
 			// Aggiungi una luce ambientale per illuminare la scena
@@ -157,7 +170,10 @@
 			creaArchi(nodes,0.3);
 			initial=false;
 			//-----------------------------------ASSEGNAZIONE IN ARRAY--------------------------------------------------------------
-			stage[0]= [transparentSphere, transparentSphere2, transparentSphere3, transparentSphere4, sphereClick, generaNucleo(transparentSphere)];
+			var nucleo1 = generaNucleo(transparentSphere);
+			//scene.add(nucleo1);
+			centralPoint.add(nucleo1);
+			stage[0]= [transparentSphere, transparentSphere2, transparentSphere3, transparentSphere4, sphereClick, nucleo1];
 			stageArray[stageCounter] = stage;
 			
 			//-----------------------------------ANIMAZIONI----------------------------------------------------------------
@@ -180,6 +196,7 @@
 				// Verifica se la sfera è stata cliccata
 				for(var t=0; t < stage.length; t++){
 					if (intersects.length > 0 && intersects[0].object === (stage[t])[4]) {
+			
 						clickCoordinates[0] = (stage[t])[4].position.x;
 						clickCoordinates[1] = (stage[t])[4].position.y;
 						clickCoordinates[2] = (stage[t])[4].position.z;
@@ -189,27 +206,26 @@
 						colorCounter++;
 						stage = [];
 						stageCounter++;
-						updateScene(5);
-						stagePrecedente = stageArray[stageCounter-1];
+						updateScene(levelSpheres[colorCounter]);
+						stagePrecedente = stageArray[stageCounter-1];				//5,11,17
 						
 						for(var i = 0; i<stagePrecedente.length;i++){			//trova sfera clicked
-							if(stagePrecedente[i][4].position.x == clickCoordinates[0] && stagePrecedente[i][4].position.y == clickCoordinates[1]){
+							if(stagePrecedente[i][4].position.x == clickCoordinates[0] && stagePrecedente[i][4].position.y == clickCoordinates[1] && stagePrecedente[i][4].position.z == clickCoordinates[2]){
 								riga = i;
 								break;
 							}
 						}
 						
-						createSphereMixer();
+						makeSphereAnimation();
+						//createSphereMixer();
 						setTimeout(function() {						
 							sphereClicked = false;
 							mixers = [];	
-						}, 10000);
-						
+						}, 7500);
+
 						
 					}
 				}
-				console.log("--------------------------------------");
-				console.log(stageArray[stageCounter]);
 			});
 			
 
@@ -270,8 +286,7 @@
 
 		}
 		
-		function updateScene(nSfere){
-
+		function updateScene(nSfere){			//modificare per rendere compatibile con valori input da json
 			material = new THREE.MeshBasicMaterial({color: 0xffffff,transparent: true, opacity: 0.1, depthWrite: true });
 			materialClick = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0, depthWrite: true });
 			
@@ -280,15 +295,18 @@
 				var arr=[];
 				for(var c=0;c<4;c++){
 					arr[c] = new THREE.Mesh(new THREE.SphereGeometry(1.5-(c/100), 32, 32), material);
-					arr[c].position.set(clickCoordinates[0],clickCoordinates[1],clickCoordinates[2]-0.01);
+					//arr[c].position.set(clickCoordinates[0],clickCoordinates[1],clickCoordinates[2]-0.01);
+					arr[c].position.set(0,0,0);
 					addNodes(arr[c], 100, 1.5);
-					scene.add(arr[c]);
+				
+					centralPoint.add(arr[c]);
 				} 	
 				arr[4] = new THREE.Mesh(geometryClick, materialClick);	
-				arr[4].position.set(arr[0].position.x,arr[0].position.y,arr[0].position.z);
-				scene.add(arr[4]);
+				//arr[4].position.set(arr[0].position.x,arr[0].position.y,arr[0].position.z);
+				arr[4].position.set(0,0,0);
+				centralPoint.add(arr[4]);
 				arr[5] = generaNucleo(arr[0]);
-				scene.add(arr[5]);
+				centralPoint.add(arr[5]);
 				stage[r] = arr;
 			}
 			stageArray[stageCounter]=stage;
@@ -323,6 +341,7 @@
 			nucleo = new THREE.Mesh(geometrySubSphere, materialSubSphere);
 			nucleo.position.set(sphere.position.x, sphere.position.y, sphere.position.z);
 			scene.add(nucleo);
+			centralPoint.add(nucleo);
 			
 			var nuoviNodi=[];
             var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
@@ -386,7 +405,7 @@
 							midPosition2.x, midPosition2.y, midPosition2.z,       // Punto intermedio 2
 							midPosition3.x, midPosition3.y, midPosition3.z,       // Punto intermedio 3
 							endPosition.x, endPosition.y, endPosition.z            // Punto B
-						]);
+						], THREE.InterpolateSmooth);
 						// Crea la clip di animazione utilizzando la traccia di posizione
 						var clip = new THREE.AnimationClip('move', duration, [positionTrack]);
 
@@ -400,6 +419,46 @@
 				fp++;
 			}
 		}
+		
+		function makeSphereAnimation(){
+			for(var row=0;row<stage.length;row++){
+				for(var column=0;column<6;column++){
+					centralPoint.add((stage[row])[column]);
+				}
+			}
+		}
+		
+		function makeSphereChangePosition(){
+		centralPoint.rotation.y += 0.02;
+		
+			for(var row=0;row<stage.length;row++){
+				if(row %4==0){
+					for(var column=0;column<6;column++){
+						(stage[row])[column].position.x += 0.02;
+					}	
+				}
+				else if(row%4==1){
+					for(var column=0;column<6;column++){
+						(stage[row])[column].position.x -= 0.02;
+					}	
+				}
+				else if(row%4 ==2){
+					for(var column=0;column<6;column++){
+						(stage[row])[column].position.z += 0.02;
+					}
+				}
+				else{
+					for(var column=0;column<6;column++){
+						(stage[row])[column].position.z -= 0.02;
+					}
+				}
+			}
+		}
+		
+		function populateSpheres(){
+			levelSpheres = [1,5,3,4,1];
+		}
+		
 
         // Funzione per animare la scena
         function animate() {
@@ -436,44 +495,40 @@
 				
 				for(var y=0;y<stagePrecedente.length;y++){				//rimozione sfere notClicked
 					if(y!=riga){
-						scene.remove((stagePrecedente[y])[0]);
-						scene.remove((stagePrecedente[y])[1]);
-						scene.remove((stagePrecedente[y])[2]);
-						scene.remove((stagePrecedente[y])[3]);
-						scene.remove((stagePrecedente[y])[4]);
-						scene.remove((stagePrecedente[y])[5]);
+						centralPoint.remove((stagePrecedente[y])[0]);
+						centralPoint.remove((stagePrecedente[y])[1]);
+						centralPoint.remove((stagePrecedente[y])[2]);
+						centralPoint.remove((stagePrecedente[y])[3]);
+						centralPoint.remove((stagePrecedente[y])[4]);
+						centralPoint.remove((stagePrecedente[y])[5]);
 					}
 				}
 				
 				for(var k=0;k<stagePrecedente[riga].length-1;k++){					//esplosione sfera clicked
 					s=stagePrecedente[riga][k];
-					
 					for(var z=0;z<s.children.length;z++){
 						var child=s.children[z];
 						if(child.geometry.type == "SphereGeometry"){
-							child.scale.set(child.scale.x-0.005,child.scale.y-0.005,child.scale.z-0.005);								
+							child.scale.set(child.scale.x*0.98,child.scale.y*0.98,child.scale.z*0.98);								
 						}
 					}
 					s.material.opacity -= 0.00012;
-					s.scale.x += 0.075;
-					s.scale.y += 0.075;
-					s.scale.z += 0.075;
-					console.log(s.position.z);
+					s.scale.x += 0.1;
+					s.scale.y += 0.1;
+					s.scale.z += 0.1;
 					if(s.material.opacity<0) scene.remove(s);						
 
 				}
-				scene.remove(stagePrecedente[riga][5]);					
-				
-				
-				for(var mix=0;mix<mixers.length;mix++){
+				centralPoint.remove(stagePrecedente[riga][5]);					
+				/*for(var mix=0;mix<mixers.length;mix++){
 					mixers[mix].update(0.025);
-				}
+				}*/
 				
-                
-
 				
+				makeSphereChangePosition();
 			}
             renderer.render(scene, camera);
+
         }
 
 		
