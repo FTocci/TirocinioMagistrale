@@ -1,0 +1,20 @@
+VALUTAZIONE PRESTAZIONI
+
+Performance Insights Browser permette l'analisi in dettaglio delle funzioni chiamate con relativi Frames visualizzati.
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+-BROWSER LIMITATIONS 
+FONTE: https://www.reddit.com/r/threejs/comments/uiu350/what_are_the_limits_to_threejs/?rdt=42569
+Real limitations are from browsers more than what the framework can allow you do create. Every tab has limited GPU resources and ram (probably even CPU).
+
+
+- OPTIMIZE PERFORMANCES
+FONTE: https://en.threejs-university.com/2021/08/06/optimizing-a-three-js-application-tips-for-achieving-a-fluid-rendering-at-60-fps/
+[            renderer = new THREE.WebGLRenderer( { antialias : false } );		]	--> AntiAliasing OFF
+[	     renderer.setPixelRatio( window.devicePixelRatio * 0.9 );		 	]	--> Lower Resolution
+[	     console.log("Number of Triangles :", renderer.info.render.triangles);	]	--> Numero triangoli nella scena
+[	     var nodeGeometry = new THREE.SphereGeometry(0.025, 5, 5)			]	--> Triangoli appartenenti ai nodi che emulano i grafi
+
+-MONITORAGGIO PERFORMANCE DA THREE.JS
+FONTE: https://threejs.org/docs/?q=webglren#api/en/renderers/WebGLRenderer
