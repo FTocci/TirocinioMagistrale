@@ -41,8 +41,9 @@
 		var mixers =[];
 		var vel = 0.02;
 		var fullRotation=false;
+		var arrayID = [], n, arrayNodes = [];
 
-		var levelSpheres = [], realNodes = [];
+
 		 
         // Funzione per inizializzare la scena
         function init() {
@@ -59,7 +60,6 @@
 			camera.zoom = 1.9;
 			camera.updateProjectionMatrix();
 			
-			calculateNumberSpheres();
 
             // Creiamo un renderizzatore
             renderer = new THREE.WebGLRenderer( { antialias : false} );
@@ -211,7 +211,6 @@
 						colorCounter++;
 						stage = [];
 						stageCounter++;
-						updateScene(levelSpheres[colorCounter]);
 						stagePrecedente = stageArray[stageCounter-1];				
 						
 						for(var i = 0; i<stagePrecedente.length;i++){			//trova sfera clicked
@@ -221,13 +220,16 @@
 							}
 						}
 						
+						updateScene(calculateNumberSpheres(stagePrecedente[i][4].userData.id));
+						
+						
 						makeSphereAnimation();
 						//createSphereMixer();
 						setTimeout(function() {						
 							sphereClicked = false;
 							mixers = [];	
 						}, 13000);
-						console.log("Number of Triangles :", renderer.info.render.triangles);
+						//console.log("Number of Triangles :", renderer.info.render.triangles);
 						
 					}
 				}
@@ -291,26 +293,26 @@
 
 		}
 		
+		
 		function updateScene(nSfere){			//modificare per rendere compatibile con valori input da json
 			material = new THREE.MeshBasicMaterial({color: 0xffffff,transparent: true, opacity: 0.05, depthWrite: true });
-			materialClick = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0, depthWrite: true });
+			materialClick = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0, depthWrite: true });			
 			
-			realNodes = [];
-			readNodes(stageCounter);
-
 			for(var r=0;r<nSfere;r++){
 				var arr=[];
 				for(var c=0;c<4;c++){
-					arr[c] = new THREE.Mesh(new THREE.SphereGeometry((realNodes[r]/300)+c/50, 32, 32), material);
+					arr[c] = new THREE.Mesh(new THREE.SphereGeometry((arrayNodes[r]/300)+c/50, 32, 32), material);
 					//arr[c].position.set(clickCoordinates[0],clickCoordinates[1],clickCoordinates[2]-0.01);
 					arr[c].position.set(0,0,0);
-					addNodes(arr[c], realNodes[r]/2, (realNodes[r]/300)+c/50); //sfera a cui aggiungere, quantità di nodi, raggio 
+					addNodes(arr[c], arrayNodes[r]/4, (arrayNodes[r]/300)+c/50); //sfera a cui aggiungere, quantità di nodi, raggio 
 
 					centralPoint.add(arr[c]);
 				}
-				geometryClick = new THREE.SphereGeometry((realNodes[r]/300)+0.2, 8, 8);
+				geometryClick = new THREE.SphereGeometry((arrayNodes[r]/300)+0.2, 8, 8);
 
-				arr[4] = new THREE.Mesh(geometryClick, materialClick);	
+				arr[4] = new THREE.Mesh(geometryClick, materialClick);
+				arr[4].userData.id=arrayID[r];
+				console.log(arr[4].userData.id);
 				//arr[4].position.set(arr[0].position.x,arr[0].position.y,arr[0].position.z);
 				arr[4].position.set(0,0,0);
 				centralPoint.add(arr[4]);
@@ -464,19 +466,51 @@
 				}
 			}
 		}
+
+		let ogg;
+		let grafo=fetch("http://localhost:8000/output.json").then(response => {console.log("FETCH COMPLETATO");return response.json()}).then(data=>{ogg=data;});
 		
-		function calculateNumberSpheres(){
-			levelSpheres = [1,4,3,4,3];
-		}
-		
-		function readNodes(i){
-			min = 300;
-			max = 500;
-			
-			for(var rN=0;rN<levelSpheres[i];rN++){
-				realNodes[rN] = Math.floor(Math.random() * (max - min) + min);
+		function findNodeById(tree, targetId) {
+		  let result = null;
+
+		  function traverse(node) {
+			if (node.Node === targetId) {
+			  result = node;
+			  return;
 			}
+
+			if (node.children && node.children.length > 0) {
+			  for (const child of node.children) {
+				traverse(child);
+				if (result) {
+				  return;
+				}
+			  }
+			}
+		  }
+
+		  traverse(tree);
+
+		  return result;
 		}
+
+		function calculateNumberSpheres(idClicked){
+				let startNode;
+				arrayID=[];
+				arrayNodes=[];
+				if(idClicked===undefined)	startNode = ogg;
+				else{
+					startNode=findNodeById(ogg, idClicked);
+					console.log("ID TROVATO"+startNode.Node);
+				}
+				startNode.children.forEach(function (node) {
+					arrayID.push(node.Node);
+					arrayNodes.push(node.NumeroNodi);
+				});
+				return startNode.children.length;			
+		}
+		
+		
 		
 
         // Funzione per animare la scena
