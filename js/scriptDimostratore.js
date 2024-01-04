@@ -1,4 +1,3 @@
-
 	// Variabili globali
 	var scene, camera, renderer, transparentSphere, isRotating = true, sphereClicked = false, centralPoint;
 	var livelli = [], nodes, scaleFactor = 1, colorCounter = 0, colorNodes = [], colorTextures = [], colorLines = [];
