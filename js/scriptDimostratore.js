@@ -278,10 +278,11 @@
 		for(var r=0;r<nSfere;r++){
 			var arr=[];
 			for(var c=0;c<4;c++){
-				arr[c] = new THREE.Mesh(new THREE.SphereGeometry((arrayNodes[r]/300)+c/50, 32, 32), material);
+				//arr[c] = new THREE.Mesh(new THREE.SphereGeometry((arrayNodes[r]/300)+c/50, 32, 32), material);
+				arr[c] = new THREE.Mesh(new THREE.SphereGeometry(1.5 + c/50, 32, 32), material);
 				//arr[c].position.set(clickCoordinates[0],clickCoordinates[1],clickCoordinates[2]-0.01);
 				arr[c].position.set(0,0,0);
-				addNodes(arr[c], arrayNodes[r]/4, (arrayNodes[r]/300)+c/50); //sfera a cui aggiungere, quantità di nodi, raggio 
+				addNodes(arr[c], arrayNodes[r]/4, 1.5 + c/50); //sfera a cui aggiungere, quantità di nodi, raggio 
 
 				centralPoint.add(arr[c]);
 			}
