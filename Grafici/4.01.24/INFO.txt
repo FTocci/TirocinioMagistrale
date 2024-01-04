@@ -1,0 +1,6 @@
+Prima versione del dimostratore, effettuati i primi test per capire le limitazioni ed in quali casi esse si manifestano.
+
+Tutti i test di seguito riportati hanno tutte le sfere di egual misura.
+
+- TEST N NODI CRESCENTE CON ARCHI
+- TEST N NODI CRESCENTE SENZA ARCHI 
