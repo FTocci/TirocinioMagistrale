@@ -21,8 +21,6 @@
 
 	var sommaFPS=0;
 	var NValuesFPS=0;
-
-
 	 
 	// Funzione per inizializzare la scena
 	function init() {
@@ -286,7 +284,7 @@
 
 				centralPoint.add(arr[c]);
 			}
-			geometryClick = new THREE.SphereGeometry((arrayNodes[r]/300)+0.2, 8, 8);
+			geometryClick = new THREE.SphereGeometry(1.5+0.2, 8, 8);
 
 			arr[4] = new THREE.Mesh(geometryClick, materialClick);
 			arr[4].userData.id=arrayID[r];
@@ -413,7 +411,8 @@
 	}
 
 	let ogg;
-	let grafo=fetch("http://localhost:8000/output.json").then(response => {console.log("FETCH COMPLETATO");return response.json()}).then(data=>{ogg=data;});
+	//let grafo=fetch("https://raw.githubusercontent.com/FTocci/TirocinioMagistrale/main/output.json").then(response => {console.log("FETCH COMPLETATO");return response.json()}).then(data=>{ogg=data;});
+	let grafo=fetch("output.json").then(response => {console.log("FETCH COMPLETATO");return response.json()}).then(data=>{ogg=data;});
 	
 	function findNodeById(tree, targetId) {
 	  let result = null;
