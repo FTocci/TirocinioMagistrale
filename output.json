@@ -14,7 +14,7 @@
       "Coreness": 2,
       "minCoreness": 1,
       "maxCoreness": 2,
-      "NumeroNodi": 500,
+      "NumeroNodi": 1000,
       "Livelli": [2, 3, 1, 1, 1, 1],
       "MinLevel": 0,
       "MaxLevel": 1,

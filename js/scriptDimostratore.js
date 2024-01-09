@@ -36,7 +36,7 @@
 		camera.zoom = 1.9;
 		camera.updateProjectionMatrix();
 		
-		
+		document.getElementById("textBox-value").innerHTML="LIV. ATTUALE: <b>ROOT</b>";
 
 		// Creiamo un renderizzatore
 		renderer = new THREE.WebGLRenderer( { antialias : false} );
@@ -143,8 +143,11 @@
 		
 		creaArchi(nodes,0.3);
 		initial=false;
+		
+		createLights();
+
 		//-----------------------------------ASSEGNAZIONE IN ARRAY--------------------------------------------------------------
-		var nucleo1 = generaNucleo(transparentSphere);
+		var nucleo1 = generaNucleo(transparentSphere,0.8);
 		//scene.add(nucleo1);
 		centralPoint.add(nucleo1);
 		stage[0]= [transparentSphere, transparentSphere2, transparentSphere3, transparentSphere4, sphereClick, nucleo1];
@@ -190,7 +193,9 @@
 						}
 					}
 					if(stagePrecedente[i][4].userData.id!=undefined)
-						document.getElementById("textBox-value").innerHTML="idClicked: "+stagePrecedente[i][4].userData.id;
+						document.getElementById("textBox-value").innerHTML="<p>LIV. ATTUALE: <b>"+stageCounter+"</b></p><hr> idClicked: "+stagePrecedente[i][4].userData.id;
+					else
+						document.getElementById("textBox-value").innerHTML="LIV. ATTUALE: <b>"+stageCounter+"</b>";
 					updateScene(calculateNumberSpheres(stagePrecedente[i][4].userData.id));
 					
 					//Azzeramento Valori per calcolo FPS Animazione BenchMark
@@ -268,31 +273,39 @@
 
 	}
 	
-	
 	function updateScene(nSfere){			//modificare per rendere compatibile con valori input da json
 		material = new THREE.MeshBasicMaterial({color: 0xffffff,transparent: true, opacity: 0.05, depthWrite: true });
 		materialClick = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0, depthWrite: true });			
 		
 		for(var r=0;r<nSfere;r++){
 			var arr=[];
+			let sizeS=1+(arrayNodes[r]/1000);
 			for(var c=0;c<4;c++){
+				
 				//arr[c] = new THREE.Mesh(new THREE.SphereGeometry((arrayNodes[r]/300)+c/50, 32, 32), material);
-				arr[c] = new THREE.Mesh(new THREE.SphereGeometry(1.5 + c/50, 32, 32), material);
+				arr[c] = new THREE.Mesh(new THREE.SphereGeometry(sizeS+c/50, 32, 32), material);
 				//arr[c].position.set(clickCoordinates[0],clickCoordinates[1],clickCoordinates[2]-0.01);
 				arr[c].position.set(0,0,0);
-				addNodes(arr[c], arrayNodes[r]/4, 1.5 + c/50); //sfera a cui aggiungere, quantità di nodi, raggio 
+				addNodes(arr[c], arrayNodes[r]/4, sizeS+c/50); //sfera a cui aggiungere, quantità di nodi, raggio 
 
 				centralPoint.add(arr[c]);
 			}
-			geometryClick = new THREE.SphereGeometry(1.5+0.2, 8, 8);
+			geometryClick = new THREE.SphereGeometry(sizeS+0.2, 8, 8);
 
 			arr[4] = new THREE.Mesh(geometryClick, materialClick);
 			arr[4].userData.id=arrayID[r];
 			//arr[4].position.set(arr[0].position.x,arr[0].position.y,arr[0].position.z);
 			arr[4].position.set(0,0,0);
 			centralPoint.add(arr[4]);
-			if(arrayFlag[r]===true){
-				arr[5] = generaNucleo(arr[0]);
+			console.log(arrayFlag);
+			if(arrayFlag[r]>0){
+				arr[5] = generaNucleo(arr[0], sizeS-0.8);
+				for(var ss=0;ss<arrayFlag[r]-1;ss++){
+					var a = generaNucleo(arr[5], sizeS-0.8);
+					a.position.set(arr[5].position.x+(Math.random()*1.25 - 0.625), arr[5].position.y+(Math.random()*1.25 - 0.625), arr[5].position.z);
+					arr[5].add(a);
+					
+				}
 				centralPoint.add(arr[5]);
 			}
 			
@@ -319,12 +332,12 @@
 		
 	}
 	
-	function generaNucleo(sphere){
+	function generaNucleo(sphere,dimNucleo){
 		var texture = colorTextures[colorCounter];
 		var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
 		
 		// Crea una geometria sferica
-		var geometrySubSphere = new THREE.SphereGeometry(0.8, 16, 16);
+		var geometrySubSphere = new THREE.SphereGeometry(dimNucleo, 16, 16);
 
 		// Crea una mesh utilizzando la geometria e il materiale
 		nucleo = new THREE.Mesh(geometrySubSphere, materialSubSphere);
@@ -335,9 +348,9 @@
 		var nuoviNodi=[];
 		var nodeGeometry = new THREE.SphereGeometry(0.025, 6, 6); // Nodo del grafo
 		var nodeMaterial = colorNodes[colorCounter];
-		for (var i = 0; i < 400; i++) {
+		for (var i = 0; i < 200; i++) {
 			var node = new THREE.Mesh(nodeGeometry, nodeMaterial);
-			var position = generateRandomCoordinates(0.8);
+			var position = generateRandomCoordinates(dimNucleo);
 			node.position.set(position.x, position.y, position.z);
 			nuoviNodi.push(node);
 			nucleo.add(node);
@@ -452,12 +465,46 @@
 				arrayID.push(node.Node);
 				arrayNodes.push(node.NumeroNodi);
 				if(node.children.length===0)
-					arrayFlag.push(false);
+					arrayFlag.push(0);
 				else
-					arrayFlag.push(true);
+					arrayFlag.push(node.children.length);
 			});
 			return startNode.children.length;			
 	}
+
+	const stars = [];
+	const starMaterial = new THREE.PointsMaterial({
+	  color: 0xffffff,
+	  size: 0.1,
+	  sizeAttenuation: true,
+	  transparent: true,
+	  blending: THREE.AdditiveBlending, 
+	});
+	function createLights(){
+
+		for (let i = 0; i < 30; i++) {
+		  const starGeometry = new THREE.SphereGeometry(0.020, 16, 16);
+		  const star = new THREE.Mesh(starGeometry, starMaterial);
+		  star.position.x = Math.random() * 25 - 12.5; 
+		  star.position.y = Math.random() * 10 - 5; // Posizione y casuale tra -5 e 5
+		  star.position.z = Math.random() * 10 - 5; // Posizione z casuale tra -5 e 5
+		  stars.push(star);
+		  scene.add(star);
+		}
+
+	}
+	
+	function toggleStars() {
+	  stars.forEach((star) => {
+		if (Math.random() > 0.5) {
+		  star.visible = !star.visible;
+		}
+	  });
+	}
+	setInterval(() => {
+		toggleStars();
+	}, 2000);
+
 
 	// Funzione per animare la scena
 	function animate() {
@@ -531,7 +578,9 @@
 		stats.update();
 		NValuesFPS++;
 		sommaFPS+=stats.fps;
-		//console.log(stats.fps);			
+		//console.log(stats.fps);
+
+		
 			
 	requestAnimationFrame(animate);
 		
