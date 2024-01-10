@@ -36,7 +36,7 @@
 		camera.zoom = 1.9;
 		camera.updateProjectionMatrix();
 		
-		document.getElementById("textBox-value").innerHTML="LIV. ATTUALE: <b>ROOT</b>";
+		document.getElementById("livAtt").innerHTML="LIV. ATTUALE: <b>ROOT</b>";
 
 		// Creiamo un renderizzatore
 		renderer = new THREE.WebGLRenderer( { antialias : false} );
@@ -192,10 +192,14 @@
 							break;
 						}
 					}
-					if(stagePrecedente[i][4].userData.id!=undefined)
-						document.getElementById("textBox-value").innerHTML="<p>LIV. ATTUALE: <b>"+stageCounter+"</b></p><hr> idClicked: "+stagePrecedente[i][4].userData.id;
-					else
-						document.getElementById("textBox-value").innerHTML="LIV. ATTUALE: <b>"+stageCounter+"</b>";
+					if(stagePrecedente[i][4].userData.id!=undefined){
+						document.getElementById("livAtt").innerHTML="<p>LIV. ATTUALE: <b>"+stageCounter+"</b></p>";
+						document.getElementById("navDepth").innerHTML=document.getElementById("navDepth").innerHTML+"<br>"+stagePrecedente[i][4].userData.id;
+					}
+					else{
+						document.getElementById("livAtt").innerHTML="LIV. ATTUALE: <b>"+stageCounter+"</b>";
+						document.getElementById("navDepth").innerHTML=document.getElementById("navDepth").innerHTML+"ROOT";
+					}
 					updateScene(calculateNumberSpheres(stagePrecedente[i][4].userData.id));
 					
 					//Azzeramento Valori per calcolo FPS Animazione BenchMark
@@ -481,7 +485,6 @@
 	  blending: THREE.AdditiveBlending, 
 	});
 	function createLights(){
-
 		for (let i = 0; i < 30; i++) {
 		  const starGeometry = new THREE.SphereGeometry(0.020, 16, 16);
 		  const star = new THREE.Mesh(starGeometry, starMaterial);
@@ -491,7 +494,6 @@
 		  stars.push(star);
 		  scene.add(star);
 		}
-
 	}
 	
 	function toggleStars() {
