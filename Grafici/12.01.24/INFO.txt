@@ -1,0 +1,5 @@
+MODIFICHE RISPETTO A CARTELLA PRECEDENTE:
+
+- Aggiunta luci sfondo al fine di rendere maggior realismo
+- Aggiunta "Sphere Packing"
+- Aggiunta pannello informativo in alto a dx
