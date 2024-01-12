@@ -213,7 +213,7 @@
 						console.log("MEDIA FPS ANIMAZIONE: " + (sommaFPS/NValuesFPS));
 						mixers = [];	
 					}, 13000);
-					//console.log("Number of Triangles :", renderer.info.render.triangles);
+					console.log("Number of Triangles :", renderer.info.render.triangles);
 					
 				}
 			}
