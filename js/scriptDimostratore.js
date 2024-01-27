@@ -305,8 +305,8 @@
 			if(arrayFlag[r]>0){
 				arr[5] = generaNucleo(arr[0], sizeS-0.8);
 				for(var ss=0;ss<arrayFlag[r]-1;ss++){
-					var a = generaNucleo(arr[5], sizeS-0.8);
-					a.position.set(arr[5].position.x+(Math.random()*1.25 - 0.625), arr[5].position.y+(Math.random()*1.25 - 0.625), arr[5].position.z);
+					var a = generaNucleo(arr[5], sizeS-1);
+					a.position.set(arr[5].position.x+(Math.random()*1.5 - 0.625), arr[5].position.y+(Math.random()*1.5 - 0.625), arr[5].position.z);
 					arr[5].add(a);
 					
 				}
@@ -480,14 +480,17 @@
 	const starMaterial = new THREE.PointsMaterial({
 	  color: 0xffffff,
 	  size: 0.1,
+	  opacity: 0.3,
 	  sizeAttenuation: true,
 	  transparent: true,
 	  blending: THREE.AdditiveBlending, 
 	});
+	let starMaterial2 = new THREE.MeshBasicMaterial({color: 0xffffff,transparent: true, opacity: 0.5, depthWrite: true });
+
 	function createLights(){
-		for (let i = 0; i < 30; i++) {
+		for (let i = 0; i < 500; i++) {
 		  const starGeometry = new THREE.SphereGeometry(0.020, 16, 16);
-		  const star = new THREE.Mesh(starGeometry, starMaterial);
+		  const star = new THREE.Mesh(starGeometry, starMaterial2);
 		  star.position.x = Math.random() * 25 - 12.5; 
 		  star.position.y = Math.random() * 10 - 5; // Posizione y casuale tra -5 e 5
 		  star.position.z = Math.random() * 10 - 5; // Posizione z casuale tra -5 e 5
@@ -497,15 +500,16 @@
 	}
 	
 	function toggleStars() {
-	  stars.forEach((star) => {
-		if (Math.random() > 0.5) {
-		  star.visible = !star.visible;
-		}
-	  });
+		stars.forEach((star) => {
+			if(Math.random() > 0.5)
+				star.visible = !star.visible;
+			//star.material.opacity += ((Math.random() * 0.1) - 0.05);
+		});
 	}
+	
 	setInterval(() => {
 		toggleStars();
-	}, 2000);
+	}, 1250);
 
 
 	// Funzione per animare la scena
@@ -581,9 +585,7 @@
 		NValuesFPS++;
 		sommaFPS+=stats.fps;
 		//console.log(stats.fps);
-
-		
-			
+	
 	requestAnimationFrame(animate);
 		
 	}
