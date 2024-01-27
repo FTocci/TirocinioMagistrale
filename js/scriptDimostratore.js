@@ -305,8 +305,9 @@
 			if(arrayFlag[r]>0){
 				arr[5] = generaNucleo(arr[0], sizeS-0.8);
 				for(var ss=0;ss<arrayFlag[r]-1;ss++){
-					var a = generaNucleo(arr[5], sizeS-1);
-					a.position.set(arr[5].position.x+(Math.random()*1.5 - 0.625), arr[5].position.y+(Math.random()*1.5 - 0.625), arr[5].position.z);
+					var a = generaNucleo(arr[5], sizeS/3);
+					let position2 = generateRandomCoordinates(sizeS-0.8);
+					a.position.set(arr[5].position.x+(position2.x), arr[5].position.y+(position2.y), arr[5].position.z);
 					arr[5].add(a);
 					
 				}
@@ -398,7 +399,8 @@
 	
 	function makeSphereChangePosition(){
 	centralPoint.rotation.y += vel;
-	vel *= 0.996;		
+	if(vel>0.001){	vel *= 0.996;		}
+	console.log(vel);
 		for(var row=0;row<stage.length;row++){
 			if(row %4==0){
 				for(var column=0;column<6;column++){
