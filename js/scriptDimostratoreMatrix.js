@@ -399,32 +399,50 @@
 	
 	
 	function makeSphereChangePosition(){
-	centralPoint.rotation.y += vel;
-	if(vel>0.001){	vel *= 0.996;		}
-	console.log(vel);
+		const matrix = new THREE.Matrix4();
+		matrix.makeRotationY(vel);
+
+		centralPoint.applyMatrix4(matrix);
+
+		//centralPoint.rotation.y += vel;
+
+		if(vel>0.001){vel *= 0.996;}
 		for(var row=0;row<stage.length;row++){
 			if(row %4==0){
 				for(var column=0;column<6;column++){
-					if((stage[row])[column]!=undefined)
-						(stage[row])[column].position.x += vel;
+					if((stage[row])[column]!=undefined){
+						const matrix = new THREE.Matrix4();
+						  matrix.makeTranslation(vel, 0, 0);
+						  (stage[row])[column].applyMatrix4(matrix);
+					}
+						
 				}	
 			}
 			else if(row%4==1){
 				for(var column=0;column<6;column++){
-					if((stage[row])[column]!=undefined)
-						(stage[row])[column].position.x -= vel;
+					if((stage[row])[column]!=undefined){
+						const matrix = new THREE.Matrix4();
+						  matrix.makeTranslation(-vel, 0, 0);
+						  (stage[row])[column].applyMatrix4(matrix);
+					}
 				}	
 			}
 			else if(row%4 ==2){
 				for(var column=0;column<6;column++){
-					if((stage[row])[column]!=undefined)
-						(stage[row])[column].position.z += vel;
+					if((stage[row])[column]!=undefined){
+						const matrix = new THREE.Matrix4();
+						  matrix.makeTranslation(0, 0, vel);
+						  (stage[row])[column].applyMatrix4(matrix);
+					}
 				}
 			}
 			else{
 				for(var column=0;column<6;column++){
-					if((stage[row])[column]!=undefined)
-						(stage[row])[column].position.z -= vel;
+					if((stage[row])[column]!=undefined){
+						const matrix = new THREE.Matrix4();
+						  matrix.makeTranslation(0, 0, -vel);
+						  (stage[row])[column].applyMatrix4(matrix);
+					}
 				}
 			}
 		}
