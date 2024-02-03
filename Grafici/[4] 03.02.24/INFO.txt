@@ -1,0 +1,2 @@
+MODIFICHE RISPETTO A CARTELLA PRECEDENTE:
+- Alleggerimento nella funzione animate(), modifiche agli andamenti delle sfere trasparenti

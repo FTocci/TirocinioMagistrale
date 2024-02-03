@@ -600,14 +600,15 @@
 		if(fullRotation)
 			makeSphereChangePosition();
 
-		renderer.render(scene, camera);	
+		//renderer.render(scene, camera);	
 		
 		stats.update();
 		NValuesFPS++;
 		sommaFPS+=stats.fps;
 		//console.log(stats.fps);
 	
-	requestAnimationFrame(animate);
+	setTimeout(function(){requestAnimationFrame(animate);renderer.render(scene, camera);}, 50);
+	//requestAnimationFrame(animate);
 		
 	}
 

@@ -210,7 +210,7 @@
 					//createSphereMixer();
 					setTimeout(function() {						
 						sphereClicked = false;
-						console.log("MEDIA FPS ANIMAZIONE: " + (sommaFPS/NValuesFPS));
+						alert("MEDIA FPS ANIMAZIONE: " + (sommaFPS/NValuesFPS));
 						mixers = [];	
 					}, 13000);
 					console.log("Number of Triangles :", renderer.info.render.triangles);
@@ -400,7 +400,7 @@
 	function makeSphereChangePosition(){
 	centralPoint.rotation.y += vel;
 	if(vel>0.001){	vel *= 0.996;		}
-	console.log(vel);
+
 		for(var row=0;row<stage.length;row++){
 			if(row %4==0){
 				for(var column=0;column<6;column++){
@@ -525,19 +525,19 @@
 				- /2500 determina quanto l'oscillazione varia velocemente (maggiore è il numero, meno è rapida la variazione)
 				- /500: [0,1] --> [0,0.002]*/
 			for(var r=0;r<stage.length;r++){
-				(stage[r])[0].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3750)))/500;
+				(stage[r])[0].rotation.x += 0.002;
 				(stage[r])[0].rotation.y += 0.002;
 
-				(stage[r])[1].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4000)))/500;
+				(stage[r])[1].rotation.x += 0.0025;
 				(stage[r])[1].rotation.y += 0.0025;
 
-				(stage[r])[2].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4250)))/500;
+				(stage[r])[2].rotation.x += 0.003;
 				(stage[r])[2].rotation.y += 0.003;
 					
-				(stage[r])[3].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4500)))/500;
+				(stage[r])[3].rotation.x += 0.0035;
 				(stage[r])[3].rotation.y += 0.0035;
 				if((stage[r])[5]!=undefined){
-					(stage[r])[5].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4500)))/500;
+					(stage[r])[5].rotation.x += 0.0035;
 					(stage[r])[5].rotation.y += 0.0035;
 				}
 				
@@ -578,6 +578,7 @@
 			
 			
 		}
+		
 		if(fullRotation)
 			makeSphereChangePosition();
 
