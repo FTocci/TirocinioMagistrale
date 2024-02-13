@@ -1,6 +1,6 @@
 	// Variabili globali
 	var scene, camera, renderer, transparentSphere, isRotating = true, sphereClicked = false, centralPoint;
-	var livelli = [], nodes, scaleFactor = 1, colorCounter = 0, colorNodes = [], colorTextures = [], colorLines = [];
+	var livelli = [], nodes, scaleFactor = 1, colorCounter = 0, colorNodes = [], colorTextures = [], colorLines = [], colorLinesPoints = [];
 	var initial = true;
 	var stageArray = [];
 	var clickCoordinates = [];
@@ -56,17 +56,29 @@
 		colorTextures[3]= textureLoader.load("textures/YellowTexture.jpg");
 		colorTextures[4]= textureLoader.load("textures/RedTexture.jpg");
 		
-		colorNodes[0] = new THREE.MeshLambertMaterial({ color: 0x2D047F });
+		/*colorNodes[0] = new THREE.MeshLambertMaterial({ color: 0x2D047F });
 		colorNodes[1] = new THREE.MeshLambertMaterial({ color: 0x00363E });
 		colorNodes[2] = new THREE.MeshLambertMaterial({ color: 0x013F01 });
 		colorNodes[3] = new THREE.MeshLambertMaterial({ color: 0x3C3302 });
-		colorNodes[4] = new THREE.MeshLambertMaterial({ color: 0x621E00 });
+		colorNodes[4] = new THREE.MeshLambertMaterial({ color: 0x621E00 });*/
 		
-		colorLines[0] = new THREE.LineBasicMaterial({ color: 0x2D047F, opacity: 0.75});
+		colorNodes[0] = 0x0000FF;
+		colorNodes[1] = 0x00363E;
+		colorNodes[2] = 0x013F01;
+		colorNodes[3] = 0x3C3302;
+		colorNodes[4] = 0x621E00;
+		
+		colorLines[0] = new THREE.LineBasicMaterial({ color: 0x0000FF, opacity: 0.75});
 		colorLines[1] = new THREE.LineBasicMaterial({ color: 0x00363E, opacity: 0.75});
 		colorLines[2] = new THREE.LineBasicMaterial({ color: 0x013F01, opacity: 0.75});
 		colorLines[3] = new THREE.LineBasicMaterial({ color: 0x3C3302, opacity: 0.75});
 		colorLines[4] = new THREE.LineBasicMaterial({ color: 0x621E00, opacity: 0.75});
+		
+		colorLinesPoints[0] = 0x0000FF;
+		colorLinesPoints[1] = 0x00363E;
+		colorLinesPoints[2] = 0x013F01;
+		colorLinesPoints[3] = 0x3C3302;
+		colorLinesPoints[4] = 0x621E00;
 
 
 		//--------------------------------------------SFERA TRASPARENTE--------------------------------------------------------
@@ -277,6 +289,40 @@
 
 	}
 	
+	function creaArchiPoints(sfera, points, minDist){
+		var linesGeometry = new THREE.BufferGeometry();
+			var vertices = [];
+			console.log(points);
+			// Calcola le linee tra i punti che sono più vicini della distanza di soglia
+			for (var i = 0; i < points.length; i++) {
+				nodoA = points[i];
+				for (var j = i + 1; j < points.length; j++) {
+					nodoB = points[j];
+					var dx = nodoA.x - nodoB.x;
+					var dy = nodoA.y - nodoB.y;
+					var dz = nodoA.z - nodoB.z;
+					var distance = dx * dx + dy * dy + dz * dz;
+					if (distance <= minDist*minDist) {
+						vertices.push(points[i].x, points[i].y, points[i].z);
+						vertices.push(points[j].x, points[j].y, points[j].z);
+					}
+				}
+			}
+
+			// Imposta gli attributi di posizione per la geometria delle linee
+			linesGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+			// Crea il materiale per le linee
+			var lineMaterial = new THREE.LineBasicMaterial({ color: colorLinesPoints[colorCounter] });
+
+			// Crea l'oggetto LineSegments utilizzando la geometria e il materiale
+			var lines = new THREE.LineSegments(linesGeometry, lineMaterial);
+
+			// Aggiungi le linee alla scena
+			sfera.add(lines);
+
+	}
+	
 	function updateScene(nSfere){			//modificare per rendere compatibile con valori input da json
 		material = new THREE.MeshBasicMaterial({color: 0xffffff,transparent: true, opacity: 0.05, depthWrite: true });
 		materialClick = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0, depthWrite: true });			
@@ -319,7 +365,7 @@
 		stageArray[stageCounter]=stage;
 	}
 	
-	function addNodes(sfera, nNodi, raggio){
+	/*function addNodes(sfera, nNodi, raggio){
 	
 		var sphereNodes=[];
 		var nodeGeometry = new THREE.SphereGeometry(0.025, 5, 5); // Nodo del grafo
@@ -335,8 +381,37 @@
 		creaArchi(sphereNodes,0.3);
 		colorCounter++;
 		
+	}*/
+	function addNodes(sfera, nNodi, raggio) {
+		var positions = [];
+		for (var i = 0; i < nNodi; i++) {
+			var position = generateRandomCoordinates(raggio);
+			positions.push(position.x, position.y, position.z);
+		}
+		var nodeGeometry = new THREE.BufferGeometry();
+		nodeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+		var nodeMaterial = new THREE.PointsMaterial({ color: colorNodes[colorCounter-1], size: 0.08 });
+		var points = new THREE.Points(nodeGeometry, nodeMaterial);
+		sfera.add(points);
+		// Estrai la geometria e le posizioni dei punti dall'oggetto Points
+		var pointsGeometry = points.geometry;
+		var pointsPositions = pointsGeometry.attributes.position.array;
+
+		// Creare un array di oggetti Vector3 rappresentanti le posizioni dei punti
+		var pointsArray = [];
+		for (var i = 0; i < pointsPositions.length; i += 3) {
+			var x = pointsPositions[i];
+			var y = pointsPositions[i + 1];
+			var z = pointsPositions[i + 2];
+			pointsArray.push(new THREE.Vector3(x, y, z));
+		}
+		colorCounter--;
+		creaArchiPoints(sfera ,pointsArray, raggio/8);
+		colorCounter++;
 	}
-	
+
+
+
 	function generaNucleo(sphere,dimNucleo){
 		var texture = colorTextures[colorCounter];
 		var materialSubSphere = new THREE.MeshPhongMaterial({ map: texture })
@@ -525,19 +600,19 @@
 				- /2500 determina quanto l'oscillazione varia velocemente (maggiore è il numero, meno è rapida la variazione)
 				- /500: [0,1] --> [0,0.002]*/
 			for(var r=0;r<stage.length;r++){
-				(stage[r])[0].rotation.x += 0.002;
+				(stage[r])[0].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 3750)))/500;
 				(stage[r])[0].rotation.y += 0.002;
 
-				(stage[r])[1].rotation.x += 0.0025;
+				(stage[r])[1].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4000)))/500;
 				(stage[r])[1].rotation.y += 0.0025;
 
-				(stage[r])[2].rotation.x += 0.003;
+				(stage[r])[2].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4250)))/500;
 				(stage[r])[2].rotation.y += 0.003;
 					
-				(stage[r])[3].rotation.x += 0.0035;
+				(stage[r])[3].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4500)))/500;
 				(stage[r])[3].rotation.y += 0.0035;
 				if((stage[r])[5]!=undefined){
-					(stage[r])[5].rotation.x += 0.0035;
+					(stage[r])[5].rotation.x += (Math.abs(Math.sin(new Date().getTime() / 4500)))/500;
 					(stage[r])[5].rotation.y += 0.0035;
 				}
 				
